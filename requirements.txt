@@ -1,0 +1,17 @@
+# requirements.txt
+ccxt
+pandas
+numpy
+torch
+scikit-learn
+schedule
+openpyxl
+plotly
+streamlit
+xgboost    # Advanced ML
+lightgbm    # Advanced ML
+prophet      # Time series forecasting
+ta        # Technical analysis
+yagmail    # Email (easier)
+smtplib               # Built-in
+email                 # Built-in

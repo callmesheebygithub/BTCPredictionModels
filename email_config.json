@@ -1,0 +1,10 @@
+{
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "email": "mdshoaibhabib1@gmail.com",
+    "password": "kcwr gley rmwq jrms",
+    "to_emails": [
+        "mdshoaibhabibai@outlook.com",
+        "mdshoaibhabibai@gmail.com"
+    ]
+}
