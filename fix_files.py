@@ -1,4 +1,36 @@
-# main.py
+# fix_all_files.py
+"""
+Fix all Python files - Remove null bytes and recreate
+"""
+
+import os
+import shutil
+
+# Backup corrupted files
+if not os.path.exists('backup_corrupted'):
+    os.makedirs('backup_corrupted')
+
+def recreate_file(filepath, content):
+    """Recreate file with clean UTF-8 encoding"""
+    # Backup old file if exists
+    if os.path.exists(filepath):
+        backup_path = os.path.join('backup_corrupted', os.path.basename(filepath) + '.bak')
+        try:
+            shutil.copy2(filepath, backup_path)
+            print(f"📦 Backed up: {filepath} -> {backup_path}")
+        except:
+            pass
+    
+    # Write clean file
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write(content)
+    print(f"✅ Recreated: {filepath}")
+
+# ============================================
+# 1. FIX main.py
+# ============================================
+
+main_py = '''# main.py
 """
 BTC Predictor - Main Entry Point
 """
@@ -40,7 +72,7 @@ def main():
     print_success(f"Model ready: {predictor.model_version}")
     
     # Show initial prediction
-    print_info("\n" + "="*60)
+    print_info("\\n" + "="*60)
     print_info("INITIAL PREDICTION")
     
     df = predictor.db.get_all_data()
@@ -105,7 +137,7 @@ def main():
             except Exception as e:
                 print_error(f"Email sending failed: {e}")
     
-    print_info("="*60 + "\n")
+    print_info("="*60 + "\\n")
     
     # Schedule daily job
     schedule.every().day.at(SCHEDULE_TIME).do(predictor.daily_job)
@@ -113,7 +145,7 @@ def main():
     print_success("BTC Predictor is running!")
     print_info(f"Daily updates scheduled for {SCHEDULE_TIME} UTC")
     print_info(f"Current model: {predictor.model_version}")
-    print_info("Press Ctrl+C to stop\n")
+    print_info("Press Ctrl+C to stop\\n")
     
     while True:
         schedule.run_pending()
@@ -121,3 +153,143 @@ def main():
 
 if __name__ == "__main__":
     main()
+'''
+
+# ============================================
+# 2. FIX config.py
+# ============================================
+
+config_py = '''# config.py
+"""
+Configuration file for BTC Predictor
+"""
+
+# Schedule time (UTC)
+SCHEDULE_TIME = "00:30"
+
+# Maximum daily change for sanity check (12%)
+MAX_DAILY_CHANGE = 0.12
+
+# Database path
+DB_PATH = 'btc_data.db'
+
+# Model directory
+MODEL_DIR = 'models/'
+
+# Logging configuration
+LOG_FILE = 'btc_predictor.log'
+LOG_LEVEL = 'INFO'
+
+# Feature columns for LSTM
+LSTM_FEATURES = ['open', 'high', 'low', 'close', 'volume']
+
+# LSTM parameters
+LSTM_SEQ_LENGTH = 30
+LSTM_HIDDEN_SIZE = 64
+LSTM_NUM_LAYERS = 2
+LSTM_EPOCHS = 100
+LSTM_LEARNING_RATE = 0.001
+LSTM_EARLY_STOPPING_PATIENCE = 15
+
+# Ensemble weights (default, will be dynamically adjusted)
+ENSEMBLE_WEIGHTS = {
+    'lstm': 0.30,
+    'ensemble': 0.30,
+    'prophet': 0.20,
+    'original': 0.20
+}
+
+# Confidence weights
+CONFIDENCE_WEIGHTS = {
+    'model_agreement': 0.25,
+    'historical_accuracy': 0.20,
+    'volatility': 0.15,
+    'regime_confidence': 0.15,
+    'dispersion': 0.15,
+    'recent_trend': 0.10
+}
+'''
+
+# ============================================
+# 3. FIX utils/helpers.py
+# ============================================
+
+helpers_py = '''# utils/helpers.py
+"""
+Utility functions
+"""
+
+def print_success(msg): print(f"[OK] {msg}")
+def print_info(msg): print(f"[INFO] {msg}")
+def print_error(msg): print(f"[ERROR] {msg}")
+def print_warning(msg): print(f"[WARN] {msg}")
+'''
+
+# ============================================
+# Recreate all files
+# ============================================
+
+print("🔄 Recreating all Python files with clean encoding...\\n")
+
+# main.py
+recreate_file('main.py', main_py)
+
+# config.py
+recreate_file('config.py', config_py)
+
+# utils/helpers.py
+recreate_file('utils/helpers.py', helpers_py)
+
+# prediction/predictor.py (already recreated)
+# prediction/__init__.py
+recreate_file('prediction/__init__.py', '''# prediction/__init__.py
+from .predictor import EnhancedSelfLearningPredictor
+from .confidence import ConfidenceCalculator
+from .intervals import IntervalCalculator
+from .signal import SignalGenerator
+
+__all__ = [
+    'EnhancedSelfLearningPredictor',
+    'ConfidenceCalculator',
+    'IntervalCalculator',
+    'SignalGenerator'
+]
+''')
+
+# models/__init__.py
+recreate_file('models/__init__.py', '''# models/__init__.py
+from .lstm_model import LSTMPredictor, ModelTrainer
+from .ensemble import DynamicEnsemble
+from .advanced_ml import AdvancedMLWrapper
+
+__all__ = [
+    'LSTMPredictor',
+    'ModelTrainer',
+    'DynamicEnsemble',
+    'AdvancedMLWrapper'
+]
+''')
+
+# database/__init__.py
+recreate_file('database/__init__.py', '''# database/__init__.py
+from .db_manager import DatabaseManager
+__all__ = ['DatabaseManager']
+''')
+
+# data/__init__.py
+recreate_file('data/__init__.py', '''# data/__init__.py
+from .yahoo_fetcher import YahooDataFetcher
+from .pipeline import DataPipeline
+__all__ = ['YahooDataFetcher', 'DataPipeline']
+''')
+
+# validation/__init__.py
+recreate_file('validation/__init__.py', '''# validation/__init__.py
+from .champion import ChampionChallenger
+from .walk_forward import WalkForwardValidator
+__all__ = ['ChampionChallenger', 'WalkForwardValidator']
+''')
+
+print("\\n✅ All files recreated successfully!")
+print("📦 Old files backed up in: backup_corrupted/")
+print("\\n🚀 Now run: python main.py")
