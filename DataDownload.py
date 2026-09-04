@@ -1,278 +1,259 @@
 """
-ROUGH.PY - Database Viewer & Exporter
-Use this file to view, analyze, and export BTC data from your database
+BTC_MYSQL_EXPORTER.py - MySQL Data Download & Export Tool
+Download Bitcoin data from MySQL database in multiple formats
 """
-import numpy as np
-import sqlite3
+
+import mysql.connector
+from mysql.connector import Error
 import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta
 import os
 import sys
+import json
+import zipfile
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+DB_USER = os.getenv('db_user')
+DB_PASSWORD = os.getenv('db_password')
+DB_HOST = os.getenv('db_host')
+DB_NAME = os.getenv('db_name')
+# Agar koi value missing hai to error show karein
+if not all([DB_USER, DB_PASSWORD, DB_HOST, DB_NAME]):
+    raise ValueError("❌ .env file mein kuch values missing hain! Please check .env file.")
+# ============================================
+# CONFIGURATION
+# ============================================
+
+# Database credentials from .env
+DB_CONFIG = {
+    'host': os.getenv('db_host', DB_HOST),
+    'user': os.getenv('db_user', DB_USER),
+    'password': os.getenv('db_password', DB_PASSWORD),
+    'database': os.getenv('db_name', DB_NAME)
+}
+
+EXPORT_DIR = 'btc_exports'  # Directory for exports
+
+# Create export directory if it doesn't exist
+Path(EXPORT_DIR).mkdir(exist_ok=True)
 
 # ============================================
 # DATABASE CONNECTION
 # ============================================
 
-DB_PATH = 'btc_data.db'
-
 def get_connection():
-    """Get database connection"""
-    if not os.path.exists(DB_PATH):
-        print(f"❌ Database '{DB_PATH}' not found!")
-        print("Please run btc_pipeline.py first to create the database.")
+    """Get MySQL database connection"""
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        return conn
+    except Error as e:
+        print(f"❌ Database connection failed: {e}")
+        print(f"📋 Config: Host={DB_CONFIG['host']}, User={DB_CONFIG['user']}, Database={DB_CONFIG['database']}")
         return None
-    return sqlite3.connect(DB_PATH)
 
-def get_table_columns(table_name):
-    """Get all column names from a table"""
-    conn = get_connection()
-    if not conn:
-        return []
-    
-    cursor = conn.cursor()
-    cursor.execute(f"PRAGMA table_info({table_name})")
-    columns = [col[1] for col in cursor.fetchall()]
-    conn.close()
-    return columns
-
-# ============================================
-# 1. VIEW DATA FUNCTIONS
-# ============================================
-
-def view_all_data(limit=50):
-    """View all BTC daily data"""
-    conn = get_connection()
-    if not conn:
-        return
-    
+def test_connection():
+    """Test database connection"""
     print("\n" + "="*80)
-    print("📊 BTC DAILY DATA (Latest Records)")
+    print("🔌 TESTING DATABASE CONNECTION")
     print("="*80)
-    
-    query = f"""
-        SELECT date, open, high, low, close, volume 
-        FROM btc_daily 
-        ORDER BY date DESC 
-        LIMIT {limit}
-    """
-    
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    
-    if df.empty:
-        print("❌ No data found in database!")
-        return
-    
-    print(f"\n📈 Total Records in Database: {len(df)} (showing last {limit})")
-    print("\n" + df.to_string(index=False))
-    print("\n" + "="*80)
-    
-    # Basic statistics
-    print("\n📊 Basic Statistics:")
-    print(f"  • Date Range: {df['date'].min()} to {df['date'].max()}")
-    print(f"  • Avg Close: ${df['close'].mean():,.2f}")
-    print(f"  • Min Close: ${df['close'].min():,.2f}")
-    print(f"  • Max Close: ${df['close'].max():,.2f}")
-    print(f"  • Avg Volume: {df['volume'].mean():,.0f}")
-    print("="*80 + "\n")
-    
-    return df
-
-def view_predictions(limit=30):
-    """View all predictions with accuracy"""
-    conn = get_connection()
-    if not conn:
-        return
-    
-    print("\n" + "="*80)
-    print("🎯 PREDICTIONS HISTORY")
-    print("="*80)
-    
-    # Get ALL columns from predictions table
-    columns = get_table_columns('predictions')
-    if not columns:
-        print("❌ Predictions table not found!")
-        return
-    
-    query = f"""
-        SELECT {', '.join(columns)}
-        FROM predictions 
-        ORDER BY date DESC 
-        LIMIT {limit}
-    """
-    
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    
-    if df.empty:
-        print("❌ No predictions found in database!")
-        return
-    
-    # Format direction if column exists
-    if 'direction_correct' in df.columns:
-        df['direction'] = df['direction_correct'].apply(
-            lambda x: '✅ CORRECT' if x == 1 else '❌ WRONG' if x == 0 else '⏳ PENDING'
-        )
-    
-    print(f"\n📈 Total Predictions: {len(df)} (showing last {limit})")
-    print("\n" + df.to_string(index=False))
-    print("\n" + "="*80)
-    
-    # Statistics
-    if 'actual_close' in df.columns and not df['actual_close'].isna().all():
-        valid = df[df['actual_close'].notna()]
-        if not valid.empty and 'error_percentage' in valid.columns:
-            print("\n📊 Prediction Statistics:")
-            print(f"  • Avg Error: {valid['error_percentage'].mean():.2f}%")
-            print(f"  • Avg Absolute Error: ${valid['absolute_error'].mean():.2f}")
-            print(f"  • Direction Accuracy: {valid['direction_correct'].mean()*100:.1f}%")
-            print(f"  • Total Validated: {len(valid)}")
-            
-            # Best and worst predictions
-            best = valid.loc[valid['error_percentage'].abs().idxmin()]
-            worst = valid.loc[valid['error_percentage'].abs().idxmax()]
-            print(f"\n🏆 Best Prediction: {best['date']} (Error: {best['error_percentage']:.2f}%)")
-            print(f"💩 Worst Prediction: {worst['date']} (Error: {worst['error_percentage']:.2f}%)")
-    
-    print("="*80 + "\n")
-    
-    return df
-
-def view_performance():
-    """View performance metrics"""
-    conn = get_connection()
-    if not conn:
-        return
-    
-    print("\n" + "="*80)
-    print("📈 PERFORMANCE METRICS")
-    print("="*80)
-    
-    # Get ALL columns from performance table
-    columns = get_table_columns('performance')
-    if not columns:
-        print("❌ Performance table not found!")
-        return
-    
-    query = f"""
-        SELECT {', '.join(columns)}
-        FROM performance 
-        ORDER BY date DESC 
-        LIMIT 20
-    """
-    
-    df = pd.read_sql_query(query, conn)
-    conn.close()
-    
-    if df.empty:
-        print("❌ No performance data found!")
-        return
-    
-    print(f"\n📊 Latest Performance Records:")
-    print("\n" + df.to_string(index=False))
-    print("\n" + "="*80 + "\n")
-    
-    # Show trend
-    if len(df) > 1 and 'direction_accuracy' in df.columns:
-        latest = df.iloc[0]
-        previous = df.iloc[1]
-        direction_change = latest['direction_accuracy'] - previous['direction_accuracy']
-        print(f"📉 Direction Accuracy Trend: {direction_change:+.1f}% (from {previous['direction_accuracy']:.1f}% to {latest['direction_accuracy']:.1f}%)")
-        print("="*80 + "\n")
-    
-    return df
-
-# ============================================
-# 2. EXPORT FUNCTIONS - ALL COLUMNS
-# ============================================
-
-def export_to_excel(filename=None):
-    """Export ALL data to Excel file with ALL columns"""
-    if filename is None:
-        filename = f'btc_data_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
     
     conn = get_connection()
     if not conn:
         return False
     
-    print(f"\n📤 Exporting data to Excel...")
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT VERSION()")
+        version = cursor.fetchone()
+        print(f"✅ Connected to MySQL: {version[0]}")
+        conn.close()
+        return True
+    except Error as e:
+        print(f"❌ Connection test failed: {e}")
+        return False
+
+def get_table_info():
+    """Get information about all tables in database"""
+    conn = get_connection()
+    if not conn:
+        return {}
     
     try:
-        # Get ALL columns from each table
-        btc_columns = get_table_columns('btc_daily')
-        pred_columns = get_table_columns('predictions')
-        perf_columns = get_table_columns('performance')
+        cursor = conn.cursor()
+        cursor.execute("SHOW TABLES")
+        tables = cursor.fetchall()
         
-        # Read ALL data with ALL columns
-        btc_data = pd.read_sql_query(f"""
-            SELECT {', '.join(btc_columns) if btc_columns else '*'} 
-            FROM btc_daily 
-            ORDER BY date
-        """, conn)
+        table_info = {}
+        for table in tables:
+            table_name = table[0]
+            
+            # Get columns
+            cursor.execute(f"SHOW COLUMNS FROM {table_name}")
+            columns = [col[0] for col in cursor.fetchall()]
+            
+            # Get row count
+            cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+            count = cursor.fetchone()[0]
+            
+            table_info[table_name] = {
+                'columns': columns,
+                'count': count
+            }
         
-        predictions = pd.read_sql_query(f"""
-            SELECT {', '.join(pred_columns) if pred_columns else '*'} 
-            FROM predictions 
-            ORDER BY date
-        """, conn) if pred_columns else pd.DataFrame()
+        conn.close()
+        return table_info
         
-        performance = pd.read_sql_query(f"""
-            SELECT {', '.join(perf_columns) if perf_columns else '*'} 
-            FROM performance 
+    except Error as e:
+        print(f"❌ Error getting table info: {e}")
+        conn.close()
+        return {}
+
+def get_all_data(table_name, columns=None):
+    """Get all data from a table with optional columns"""
+    conn = get_connection()
+    if not conn:
+        return None
+    
+    try:
+        if columns:
+            col_str = ', '.join(columns)
+        else:
+            col_str = '*'
+        
+        query = f"SELECT {col_str} FROM {table_name} ORDER BY date"
+        df = pd.read_sql_query(query, conn)
+        conn.close()
+        return df
+        
+    except Error as e:
+        print(f"❌ Error getting data from {table_name}: {e}")
+        conn.close()
+        return None
+
+def get_data_by_date_range(table_name, start_date, end_date):
+    """Get data for a specific date range"""
+    conn = get_connection()
+    if not conn:
+        return None
+    
+    try:
+        query = f"""
+            SELECT * FROM {table_name} 
+            WHERE date BETWEEN '{start_date}' AND '{end_date}'
             ORDER BY date
-        """, conn) if perf_columns else pd.DataFrame()
+        """
+        df = pd.read_sql_query(query, conn)
+        conn.close()
+        return df
+        
+    except Error as e:
+        print(f"❌ Error getting data: {e}")
+        conn.close()
+        return None
+
+# ============================================
+# 1. EXPORT FUNCTIONS
+# ============================================
+
+def export_to_excel(filename=None, table_name='btc_price_history'):
+    """Export data to Excel with multiple sheets and formatting"""
+    if filename is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = os.path.join(EXPORT_DIR, f'btc_data_{timestamp}.xlsx')
+    
+    print("\n" + "="*80)
+    print("📤 EXPORTING DATA TO EXCEL (MySQL)")
+    print("="*80)
+    
+    conn = get_connection()
+    if not conn:
+        return False
+    
+    try:
+        # Get table info
+        table_info = get_table_info()
+        
+        # Check if btc_price_history table exists
+        if table_name not in table_info:
+            print(f"❌ Table '{table_name}' not found!")
+            print(f"Available tables: {', '.join(table_info.keys())}")
+            conn.close()
+            return False
+        
+        with pd.ExcelWriter(filename, engine='openpyxl') as writer:
+            
+            # Sheet 1: BTC Price History (complete)
+            print("📊 Exporting BTC price history...")
+            btc_data = pd.read_sql_query(f"SELECT * FROM {table_name} ORDER BY date", conn)
+            if not btc_data.empty:
+                btc_data.to_excel(writer, sheet_name='BTC_Price_History', index=False)
+                print(f"   ✅ {len(btc_data)} records exported")
+            
+            # Sheet 2: Raw Data with all columns
+            print("📊 Exporting raw data...")
+            raw_data = btc_data.copy()
+            raw_data.to_excel(writer, sheet_name='Raw_Data', index=False)
+            
+            # Sheet 3: Summary Statistics
+            print("📊 Creating summary statistics...")
+            summary = create_summary_sheet(btc_data)
+            summary.to_excel(writer, sheet_name='Summary', index=False)
+            
+            # Sheet 4: Technical Indicators
+            print("🔧 Creating technical indicators...")
+            tech_data = create_technical_indicators(btc_data)
+            if tech_data is not None:
+                tech_data.to_excel(writer, sheet_name='Technical_Indicators', index=False)
+            
+            # Sheet 5: All-time Statistics
+            print("📈 Creating all-time statistics...")
+            all_time_stats = create_all_time_stats(btc_data)
+            all_time_stats.to_excel(writer, sheet_name='All_Time_Stats', index=False)
+            
+            # Sheet 6: Column Information
+            print("📋 Creating column information...")
+            col_info = create_column_info_sheet(conn, table_info)
+            col_info.to_excel(writer, sheet_name='Column_Info', index=False)
+            
+            # Sheet 7: Monthly Averages
+            print("📊 Creating monthly averages...")
+            monthly_stats = create_monthly_stats(btc_data)
+            monthly_stats.to_excel(writer, sheet_name='Monthly_Stats', index=False)
+            
+            # Sheet 8: Yearly Statistics
+            print("📅 Creating yearly statistics...")
+            yearly_stats = create_yearly_stats(btc_data)
+            yearly_stats.to_excel(writer, sheet_name='Yearly_Stats', index=False)
+            
+            # Sheet 9: Price Distribution
+            print("📊 Creating price distribution...")
+            dist_data = create_price_distribution(btc_data)
+            dist_data.to_excel(writer, sheet_name='Price_Distribution', index=False)
+            
+            # Sheet 10: Recent Data (Last 30 days)
+            print("📊 Creating recent data...")
+            recent_data = btc_data.tail(30) if len(btc_data) > 30 else btc_data
+            recent_data.to_excel(writer, sheet_name='Recent_Data', index=False)
         
         conn.close()
         
-        # Check if data exists
-        if btc_data.empty:
-            print("❌ No BTC data to export!")
-            return False
-        
-        # Create Excel writer
-        with pd.ExcelWriter(filename, engine='openpyxl') as writer:
-            # Sheet 1: BTC Daily Data (ALL columns)
-            btc_data.to_excel(writer, sheet_name='BTC_Daily', index=False)
-            
-            # Sheet 2: Predictions (ALL columns)
-            if not predictions.empty:
-                predictions.to_excel(writer, sheet_name='Predictions', index=False)
-            
-            # Sheet 3: Performance (ALL columns)
-            if not performance.empty:
-                performance.to_excel(writer, sheet_name='Performance', index=False)
-            
-            # Sheet 4: Column Info (NEW - shows all columns)
-            column_info = create_column_info(btc_data, predictions, performance)
-            column_info.to_excel(writer, sheet_name='Column_Info', index=False)
-            
-            # Sheet 5: Summary Statistics
-            summary = create_summary(btc_data, predictions)
-            summary.to_excel(writer, sheet_name='Summary', index=False)
-            
-            # Sheet 6: Technical Analysis
-            if len(btc_data) > 30:
-                tech_analysis = create_technical_analysis(btc_data)
-                tech_analysis.to_excel(writer, sheet_name='Technical_Analysis', index=False)
-        
-        print(f"✅ Data exported successfully to: {filename}")
-        print(f"\n📊 Export Summary:")
-        print(f"  • BTC Daily Records: {len(btc_data)} ({len(btc_data.columns)} columns)")
-        print(f"  • Predictions: {len(predictions)} ({len(predictions.columns)} columns)")
-        print(f"  • Performance Records: {len(performance)} ({len(performance.columns)} columns)")
-        
-        # Show all column names
-        print(f"\n📋 BTC Daily Columns: {', '.join(btc_data.columns)}")
-        if not predictions.empty:
-            print(f"📋 Predictions Columns: {', '.join(predictions.columns)}")
-        if not performance.empty:
-            print(f"📋 Performance Columns: {', '.join(performance.columns)}")
+        print("\n" + "="*80)
+        print(f"✅ DATA EXPORTED SUCCESSFULLY!")
+        print(f"📁 File: {filename}")
+        if os.path.exists(filename):
+            print(f"📊 Size: {os.path.getsize(filename) / (1024*1024):.2f} MB")
+        print(f"📋 Sheets: 10")
+        print("="*80 + "\n")
         
         # Open file automatically (Windows only)
         if sys.platform == 'win32':
             try:
                 os.startfile(filename)
-                print(f"\n📂 File opened automatically")
+                print("📂 File opened automatically")
             except:
                 pass
         
@@ -284,82 +265,177 @@ def export_to_excel(filename=None):
         traceback.print_exc()
         return False
 
-def create_column_info(btc_data, predictions, performance):
-    """Create column information sheet"""
-    info_data = []
+def export_to_csv(table_name='btc_price_history'):
+    """Export data to CSV files"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    export_folder = os.path.join(EXPORT_DIR, f'csv_export_{timestamp}')
+    Path(export_folder).mkdir(exist_ok=True)
     
-    # BTC Daily columns
-    info_data.append(['TABLE', 'COLUMN NAME', 'DATA TYPE', 'SAMPLE VALUE'])
-    for col in btc_data.columns:
-        dtype = btc_data[col].dtype
-        sample = btc_data[col].iloc[0] if not btc_data.empty else 'N/A'
-        info_data.append(['btc_daily', col, str(dtype), str(sample)])
+    print("\n" + "="*80)
+    print("📤 EXPORTING DATA TO CSV (MySQL)")
+    print("="*80)
     
-    # Predictions columns
-    if not predictions.empty:
-        for col in predictions.columns:
-            dtype = predictions[col].dtype
-            sample = predictions[col].iloc[0] if not predictions.empty else 'N/A'
-            info_data.append(['predictions', col, str(dtype), str(sample)])
+    conn = get_connection()
+    if not conn:
+        return False
     
-    # Performance columns
-    if not performance.empty:
-        for col in performance.columns:
-            dtype = performance[col].dtype
-            sample = performance[col].iloc[0] if not performance.empty else 'N/A'
-            info_data.append(['performance', col, str(dtype), str(sample)])
-    
-    df = pd.DataFrame(info_data)
-    return df
+    try:
+        table_info = get_table_info()
+        
+        for table_name in table_info:
+            print(f"📊 Exporting {table_name}...")
+            df = pd.read_sql_query(f"SELECT * FROM {table_name} ORDER BY date", conn)
+            if not df.empty:
+                filename = os.path.join(export_folder, f'{table_name}.csv')
+                df.to_csv(filename, index=False)
+                print(f"   ✅ {len(df)} records saved to {filename}")
+        
+        conn.close()
+        
+        print("\n" + "="*80)
+        print(f"✅ CSV EXPORT COMPLETED!")
+        print(f"📁 Folder: {export_folder}")
+        print(f"📊 Files: {len(table_info)}")
+        print("="*80 + "\n")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Export failed: {e}")
+        return False
 
-def create_summary(btc_data, predictions):
-    """Create summary statistics"""
+def export_to_json(table_name='btc_price_history'):
+    """Export data to JSON files"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    export_folder = os.path.join(EXPORT_DIR, f'json_export_{timestamp}')
+    Path(export_folder).mkdir(exist_ok=True)
+    
+    print("\n" + "="*80)
+    print("📤 EXPORTING DATA TO JSON (MySQL)")
+    print("="*80)
+    
+    conn = get_connection()
+    if not conn:
+        return False
+    
+    try:
+        table_info = get_table_info()
+        
+        for table_name in table_info:
+            print(f"📊 Exporting {table_name}...")
+            df = pd.read_sql_query(f"SELECT * FROM {table_name} ORDER BY date", conn)
+            if not df.empty:
+                # Convert date columns to string for JSON serialization
+                for col in df.columns:
+                    if 'date' in col.lower():
+                        df[col] = df[col].astype(str)
+                
+                filename = os.path.join(export_folder, f'{table_name}.json')
+                df.to_json(filename, orient='records', indent=2)
+                print(f"   ✅ {len(df)} records saved to {filename}")
+        
+        conn.close()
+        
+        print("\n" + "="*80)
+        print(f"✅ JSON EXPORT COMPLETED!")
+        print(f"📁 Folder: {export_folder}")
+        print("="*80 + "\n")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Export failed: {e}")
+        return False
+
+def export_all_formats():
+    """Export data in all formats (Excel, CSV, JSON)"""
+    print("\n" + "="*80)
+    print("📤 EXPORTING DATA IN ALL FORMATS (MySQL)")
+    print("="*80)
+    
+    success = True
+    
+    # Export Excel
+    if not export_to_excel():
+        success = False
+    
+    # Export CSV
+    if not export_to_csv():
+        success = False
+    
+    # Export JSON
+    if not export_to_json():
+        success = False
+    
+    if success:
+        print("\n✅ All exports completed successfully!")
+    else:
+        print("\n⚠️ Some exports failed. Please check the errors above.")
+    
+    return success
+
+# ============================================
+# 2. SHEET CREATION FUNCTIONS
+# ============================================
+
+def create_summary_sheet(btc_data):
+    """Create summary statistics sheet"""
     summary_data = []
     
-    # BTC Data Summary
-    summary_data.append(['BTC DATA SUMMARY', ''])
+    # Basic Info
+    summary_data.append(['METRIC', 'VALUE'])
     summary_data.append(['Total Records', len(btc_data)])
-    summary_data.append(['Total Columns', len(btc_data.columns)])
-    summary_data.append(['Date Range', f"{btc_data['date'].min()} to {btc_data['date'].max()}"])
-    summary_data.append(['Current Price', f"${btc_data['close'].iloc[-1]:,.2f}"])
-    summary_data.append(['Avg Close', f"${btc_data['close'].mean():,.2f}"])
-    summary_data.append(['Min Close', f"${btc_data['close'].min():,.2f}"])
-    summary_data.append(['Max Close', f"${btc_data['close'].max():,.2f}"])
-    summary_data.append(['Avg Volume', f"{btc_data['volume'].mean():,.0f}"])
-    summary_data.append([])
+    if not btc_data.empty:
+        summary_data.append(['Date Range Start', btc_data['date'].min()])
+        summary_data.append(['Date Range End', btc_data['date'].max()])
+    summary_data.append(['', ''])
     
-    # Price Changes
-    if len(btc_data) > 7:
-        summary_data.append(['PRICE CHANGES', ''])
-        summary_data.append(['1-Day Change', f"{((btc_data['close'].iloc[-1] - btc_data['close'].iloc[-2]) / btc_data['close'].iloc[-2] * 100):+.2f}%"])
-        summary_data.append(['7-Day Change', f"{((btc_data['close'].iloc[-1] - btc_data['close'].iloc[-7]) / btc_data['close'].iloc[-7] * 100):+.2f}%"])
-        if len(btc_data) > 30:
-            summary_data.append(['30-Day Change', f"{((btc_data['close'].iloc[-1] - btc_data['close'].iloc[-30]) / btc_data['close'].iloc[-30] * 100):+.2f}%"])
-        summary_data.append([])
-    
-    # Predictions Summary
-    if not predictions.empty:
-        summary_data.append(['PREDICTIONS SUMMARY', ''])
-        summary_data.append(['Total Predictions', len(predictions)])
-        summary_data.append(['Total Columns', len(predictions.columns)])
+    # Price Statistics
+    if not btc_data.empty:
+        summary_data.append(['PRICE STATISTICS', ''])
+        summary_data.append(['Current Price', f"${btc_data['close'].iloc[-1]:,.2f}"])
+        summary_data.append(['Average Price', f"${btc_data['close'].mean():,.2f}"])
+        summary_data.append(['Median Price', f"${btc_data['close'].median():,.2f}"])
+        summary_data.append(['Min Price', f"${btc_data['close'].min():,.2f}"])
+        summary_data.append(['Max Price', f"${btc_data['close'].max():,.2f}"])
+        summary_data.append(['Price Range', f"${btc_data['close'].max() - btc_data['close'].min():,.2f}"])
+        summary_data.append(['', ''])
         
-        if 'actual_close' in predictions.columns:
-            valid = predictions[predictions['actual_close'].notna()]
-            if not valid.empty:
-                summary_data.append(['Validated Predictions', len(valid)])
-                if 'error_percentage' in valid.columns:
-                    summary_data.append(['Avg Error %', f"{valid['error_percentage'].mean():.2f}%"])
-                if 'absolute_error' in valid.columns:
-                    summary_data.append(['Avg Absolute Error', f"${valid['absolute_error'].mean():.2f}"])
-                if 'direction_correct' in valid.columns:
-                    summary_data.append(['Direction Accuracy', f"{valid['direction_correct'].mean()*100:.1f}%"])
+        # Returns
+        returns = btc_data['close'].pct_change() * 100
+        summary_data.append(['RETURNS', ''])
+        total_return = ((btc_data['close'].iloc[-1] - btc_data['close'].iloc[0]) / btc_data['close'].iloc[0] * 100)
+        summary_data.append(['Total Return %', f"{total_return:.2f}%"])
+        summary_data.append(['Average Daily Return %', f"{returns.mean():.2f}%"])
+        summary_data.append(['Max Daily Gain %', f"{returns.max():.2f}%"])
+        summary_data.append(['Max Daily Loss %', f"{returns.min():.2f}%"])
+        summary_data.append(['Standard Deviation %', f"{returns.std():.2f}%"])
+        summary_data.append(['', ''])
+        
+        # Volume
+        summary_data.append(['VOLUME', ''])
+        summary_data.append(['Average Volume', f"{btc_data['volume'].mean():,.0f}"])
+        summary_data.append(['Max Volume', f"{btc_data['volume'].max():,.0f}"])
+        summary_data.append(['Min Volume', f"{btc_data['volume'].min():,.0f}"])
+        summary_data.append(['', ''])
+        
+        # Winning/Losing Days
+        winning_days = (returns > 0).sum()
+        losing_days = (returns < 0).sum()
+        summary_data.append(['DAYS SUMMARY', ''])
+        summary_data.append(['Winning Days', winning_days])
+        summary_data.append(['Losing Days', losing_days])
+        summary_data.append(['Win Rate', f"{winning_days / len(btc_data) * 100:.1f}%"])
     
     df = pd.DataFrame(summary_data)
     df.columns = ['Metric', 'Value']
     return df
 
-def create_technical_analysis(btc_data):
-    """Create technical analysis sheet"""
+def create_technical_indicators(btc_data):
+    """Create technical indicators sheet"""
+    if btc_data.empty or len(btc_data) < 50:
+        return None
+    
     df = btc_data.copy()
     
     # Moving Averages
@@ -368,376 +444,391 @@ def create_technical_analysis(btc_data):
     df['MA_50'] = df['close'].rolling(50).mean()
     df['MA_200'] = df['close'].rolling(200).mean()
     
-    # RSI
+    # RSI (14-day)
     delta = df['close'].diff()
     gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
     rs = gain / loss
-    df['RSI'] = 100 - (100 / (1 + rs))
+    df['RSI_14'] = 100 - (100 / (1 + rs))
     
-    # Bollinger Bands
-    df['BB_upper'] = df['close'].rolling(20).mean() + (df['close'].rolling(20).std() * 2)
-    df['BB_middle'] = df['close'].rolling(20).mean()
-    df['BB_lower'] = df['close'].rolling(20).mean() - (df['close'].rolling(20).std() * 2)
+    # Bollinger Bands (20-day, 2 std dev)
+    df['BB_Upper'] = df['close'].rolling(20).mean() + (df['close'].rolling(20).std() * 2)
+    df['BB_Middle'] = df['close'].rolling(20).mean()
+    df['BB_Lower'] = df['close'].rolling(20).mean() - (df['close'].rolling(20).std() * 2)
     
     # MACD
     exp1 = df['close'].ewm(span=12, adjust=False).mean()
     exp2 = df['close'].ewm(span=26, adjust=False).mean()
     df['MACD'] = exp1 - exp2
-    df['MACD_signal'] = df['MACD'].ewm(span=9, adjust=False).mean()
-    df['MACD_histogram'] = df['MACD'] - df['MACD_signal']
+    df['MACD_Signal'] = df['MACD'].ewm(span=9, adjust=False).mean()
+    df['MACD_Histogram'] = df['MACD'] - df['MACD_Signal']
     
-    # ATR (Average True Range)
+    # ATR (14-day)
     high_low = df['high'] - df['low']
     high_close = (df['high'] - df['close'].shift()).abs()
     low_close = (df['low'] - df['close'].shift()).abs()
     ranges = pd.concat([high_low, high_close, low_close], axis=1)
     true_range = np.max(ranges, axis=1)
-    df['ATR'] = true_range.rolling(14).mean()
+    df['ATR_14'] = true_range.rolling(14).mean()
     
-    # Current signals (last row only)
-    last_row = df.iloc[-1:].copy()
-    
-    # Add signal indicators
-    signals = []
-    if last_row['close'].iloc[0] > last_row['MA_50'].iloc[0]:
-        signals.append("Bullish (Above MA50)")
-    else:
-        signals.append("Bearish (Below MA50)")
-    
-    if last_row['RSI'].iloc[0] > 70:
-        signals.append("Overbought")
-    elif last_row['RSI'].iloc[0] < 30:
-        signals.append("Oversold")
-    else:
-        signals.append("Neutral")
-    
-    if last_row['MACD'].iloc[0] > last_row['MACD_signal'].iloc[0]:
-        signals.append("MACD Bullish")
-    else:
-        signals.append("MACD Bearish")
-    
-    last_row['Signals'] = ', '.join(signals)
-    
-    return last_row
+    # Keep only last 30 days for summary
+    return df.tail(30)
 
-# ============================================
-# 3. ANALYSIS FUNCTIONS
-# ============================================
-
-def analyze_data():
-    """Perform basic analysis on the data"""
-    conn = get_connection()
-    if not conn:
-        return
-    
-    print("\n" + "="*80)
-    print("🔍 DATA ANALYSIS")
-    print("="*80)
-    
-    # Get data
-    btc_data = pd.read_sql_query("SELECT * FROM btc_daily ORDER BY date", conn)
-    predictions = pd.read_sql_query("SELECT * FROM predictions ORDER BY date", conn)
-    conn.close()
-    
+def create_all_time_stats(btc_data):
+    """Create all-time statistics sheet"""
     if btc_data.empty:
-        print("❌ No data to analyze!")
-        return
+        return pd.DataFrame()
     
-    print(f"\n📊 BTC Data Analysis:")
-    print(f"  • Total Days: {len(btc_data)}")
-    print(f"  • Total Columns: {len(btc_data.columns)}")
-    print(f"  • Date Range: {btc_data['date'].min()} to {btc_data['date'].max()}")
-    print(f"  • Current Price: ${btc_data['close'].iloc[-1]:,.2f}")
+    stats = []
     
-    if len(btc_data) > 7:
-        print(f"  • 7-Day Change: {((btc_data['close'].iloc[-1] - btc_data['close'].iloc[-7]) / btc_data['close'].iloc[-7] * 100):+.2f}%")
-    if len(btc_data) > 30:
-        print(f"  • 30-Day Change: {((btc_data['close'].iloc[-1] - btc_data['close'].iloc[-30]) / btc_data['close'].iloc[-30] * 100):+.2f}%")
-    if len(btc_data) > 90:
-        print(f"  • 90-Day Change: {((btc_data['close'].iloc[-1] - btc_data['close'].iloc[-90]) / btc_data['close'].iloc[-90] * 100):+.2f}%")
+    # All-time high/low
+    ath_idx = btc_data['close'].idxmax()
+    atl_idx = btc_data['close'].idxmin()
     
-    # Price ranges
-    print(f"\n📈 Price Statistics:")
-    print(f"  • All-Time High: ${btc_data['high'].max():,.2f}")
-    print(f"  • All-Time Low: ${btc_data['low'].min():,.2f}")
-    print(f"  • Average Close: ${btc_data['close'].mean():,.2f}")
-    print(f"  • Median Close: ${btc_data['close'].median():,.2f}")
+    stats.append(['STATISTIC', 'DATE', 'VALUE'])
+    stats.append(['All-Time High', btc_data.loc[ath_idx, 'date'], f"${btc_data.loc[ath_idx, 'close']:,.2f}"])
+    stats.append(['All-Time Low', btc_data.loc[atl_idx, 'date'], f"${btc_data.loc[atl_idx, 'close']:,.2f}"])
     
-    # Volatility
-    daily_returns = btc_data['close'].pct_change() * 100
-    print(f"\n📉 Volatility:")
-    print(f"  • Avg Daily Return: {daily_returns.mean():+.2f}%")
-    print(f"  • Max Daily Gain: {daily_returns.max():+.2f}%")
-    print(f"  • Max Daily Loss: {daily_returns.min():+.2f}%")
-    print(f"  • Volatility (Std Dev): {daily_returns.std():.2f}%")
+    # Current price position
+    current = btc_data['close'].iloc[-1]
+    ath = btc_data['close'].max()
+    atl = btc_data['close'].min()
     
-    # Winning days
-    winning_days = (daily_returns > 0).sum()
-    print(f"  • Winning Days: {winning_days} ({winning_days/len(daily_returns)*100:.1f}%)")
+    stats.append(['', '', ''])
+    stats.append(['CURRENT POSITION', '', ''])
+    stats.append(['Price from ATH', '', f"{(current / ath * 100):.1f}%"])
+    stats.append(['Price from ATL', '', f"{(current / atl * 100):.1f}%"])
+    stats.append(['Current Percentile', '', f"{((current - atl) / (ath - atl) * 100):.1f}%"])
     
-    # Predictions Analysis
-    if not predictions.empty:
-        print(f"\n🎯 Prediction Analysis:")
-        print(f"  • Total Predictions: {len(predictions)}")
-        print(f"  • Columns: {', '.join(predictions.columns)}")
-        
-        if 'actual_close' in predictions.columns:
-            valid = predictions[predictions['actual_close'].notna()]
-            if not valid.empty:
-                print(f"  • Validated Predictions: {len(valid)}")
-                if 'error_percentage' in valid.columns:
-                    print(f"  • Avg Error: {valid['error_percentage'].mean():.2f}%")
-                if 'direction_correct' in valid.columns:
-                    print(f"  • Direction Accuracy: {valid['direction_correct'].mean()*100:.1f}%")
+    df = pd.DataFrame(stats)
+    df.columns = df.iloc[0]
+    df = df[1:]
+    return df
+
+def create_column_info_sheet(conn, table_info):
+    """Create column information sheet"""
+    info_data = []
     
-    print("="*80 + "\n")
+    for table_name, info in table_info.items():
+        for col in info['columns']:
+            # Get data type
+            try:
+                cursor = conn.cursor()
+                cursor.execute(f"DESCRIBE {table_name} {col}")
+                col_info = cursor.fetchone()
+                data_type = col_info[1] if col_info else 'N/A'
+            except:
+                data_type = 'N/A'
+            
+            info_data.append([table_name, col, data_type])
+    
+    df = pd.DataFrame(info_data)
+    df.columns = ['Table', 'Column', 'Data Type']
+    return df
+
+def create_monthly_stats(btc_data):
+    """Create monthly statistics sheet"""
+    if btc_data.empty:
+        return pd.DataFrame()
+    
+    df = btc_data.copy()
+    df['year'] = pd.to_datetime(df['date']).dt.year
+    df['month'] = pd.to_datetime(df['date']).dt.month
+    
+    monthly = df.groupby(['year', 'month']).agg({
+        'close': ['mean', 'min', 'max', 'std'],
+        'volume': 'mean'
+    }).round(2)
+    
+    monthly.columns = ['Avg_Close', 'Min_Close', 'Max_Close', 'Std_Dev', 'Avg_Volume']
+    monthly = monthly.reset_index()
+    
+    # Format columns
+    monthly['Avg_Close'] = monthly['Avg_Close'].apply(lambda x: f"${x:,.2f}")
+    monthly['Min_Close'] = monthly['Min_Close'].apply(lambda x: f"${x:,.2f}")
+    monthly['Max_Close'] = monthly['Max_Close'].apply(lambda x: f"${x:,.2f}")
+    monthly['Avg_Volume'] = monthly['Avg_Volume'].apply(lambda x: f"{x:,.0f}")
+    
+    return monthly
+
+def create_yearly_stats(btc_data):
+    """Create yearly statistics sheet"""
+    if btc_data.empty:
+        return pd.DataFrame()
+    
+    df = btc_data.copy()
+    df['year'] = pd.to_datetime(df['date']).dt.year
+    
+    yearly = df.groupby('year').agg({
+        'close': ['mean', 'min', 'max', 'std'],
+        'volume': 'mean'
+    }).round(2)
+    
+    yearly.columns = ['Avg_Close', 'Min_Close', 'Max_Close', 'Std_Dev', 'Avg_Volume']
+    yearly = yearly.reset_index()
+    
+    # Calculate yearly return
+    yearly['Year_Start'] = df.groupby('year')['close'].first().values
+    yearly['Year_End'] = df.groupby('year')['close'].last().values
+    yearly['Year_Return_%'] = ((yearly['Year_End'] - yearly['Year_Start']) / yearly['Year_Start'] * 100).round(2)
+    
+    # Format columns
+    yearly['Avg_Close'] = yearly['Avg_Close'].apply(lambda x: f"${x:,.2f}")
+    yearly['Min_Close'] = yearly['Min_Close'].apply(lambda x: f"${x:,.2f}")
+    yearly['Max_Close'] = yearly['Max_Close'].apply(lambda x: f"${x:,.2f}")
+    yearly['Year_Return_%'] = yearly['Year_Return_%'].apply(lambda x: f"{x:+.2f}%")
+    
+    return yearly
+
+def create_price_distribution(btc_data):
+    """Create price distribution sheet"""
+    if btc_data.empty:
+        return pd.DataFrame()
+    
+    # Create price bins
+    bins = [0, 1000, 5000, 10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, float('inf')]
+    labels = ['$0-1K', '$1K-5K', '$5K-10K', '$10K-20K', '$20K-30K', '$30K-40K', 
+              '$40K-50K', '$50K-60K', '$60K-70K', '$70K-80K', '$80K+']
+    
+    btc_data['price_range'] = pd.cut(btc_data['close'], bins=bins, labels=labels, right=False)
+    
+    distribution = btc_data.groupby('price_range').size().reset_index(name='count')
+    distribution['percentage'] = (distribution['count'] / len(btc_data) * 100).round(1)
+    distribution = distribution.sort_values('price_range')
+    
+    return distribution
 
 # ============================================
-# 4. CLEANUP FUNCTIONS
+# 3. DATA QUERY FUNCTIONS
 # ============================================
 
-def delete_old_data(days=365):
-    """Delete data older than specified days"""
-    conn = get_connection()
-    if not conn:
-        return
-    
-    cutoff_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
-    
-    print(f"\n🗑️ Deleting data older than {days} days (before {cutoff_date})...")
-    
-    cursor = conn.cursor()
-    cursor.execute(f"DELETE FROM btc_daily WHERE date < '{cutoff_date}'")
-    deleted = cursor.rowcount
-    conn.commit()
-    conn.close()
-    
-    print(f"✅ Deleted {deleted} records older than {days} days")
-    return deleted
-
-def clear_predictions():
-    """Clear all prediction data"""
-    conn = get_connection()
-    if not conn:
-        return
-    
-    confirm = input("\n⚠️ Are you sure you want to delete all predictions? (yes/no): ")
-    if confirm.lower() != 'yes':
-        print("❌ Operation cancelled")
-        return
-    
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM predictions")
-    cursor.execute("DELETE FROM performance")
-    deleted = cursor.rowcount
-    conn.commit()
-    conn.close()
-    
-    print(f"✅ Deleted all predictions and performance data")
-    return deleted
-
-def clear_all_data():
-    """Clear ALL data (including BTC prices)"""
-    conn = get_connection()
-    if not conn:
-        return
-    
-    confirm = input("\n⚠️ WARNING: This will delete ALL data including BTC prices! Are you sure? (yes/no): ")
-    if confirm.lower() != 'yes':
-        print("❌ Operation cancelled")
-        return
-    
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM btc_daily")
-    cursor.execute("DELETE FROM predictions")
-    cursor.execute("DELETE FROM performance")
-    deleted = cursor.rowcount
-    conn.commit()
-    conn.close()
-    
-    print(f"✅ Deleted ALL data from database")
-    print("Please run btc_pipeline.py again to rebuild the database.")
-    return deleted
-
-# ============================================
-# 5. UTILITY FUNCTIONS
-# ============================================
-
-def show_database_info():
-    """Show database info and size"""
-    conn = get_connection()
-    if not conn:
-        return
-    
+def query_data():
+    """Run custom SQL queries"""
     print("\n" + "="*80)
-    print("📋 DATABASE INFORMATION")
-    print("="*80)
-    
-    # Get file size
-    if os.path.exists(DB_PATH):
-        size = os.path.getsize(DB_PATH)
-        if size < 1024 * 1024:
-            size_str = f"{size / 1024:.2f} KB"
-        else:
-            size_str = f"{size / (1024 * 1024):.2f} MB"
-        print(f"  • Database Size: {size_str}")
-    
-    cursor = conn.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    tables = cursor.fetchall()
-    
-    print(f"\n  • Tables:")
-    total_records = 0
-    for table in tables:
-        table_name = table[0]
-        cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
-        count = cursor.fetchone()[0]
-        total_records += count
-        
-        # Get column info
-        cursor.execute(f"PRAGMA table_info({table_name})")
-        columns = cursor.fetchall()
-        col_names = [col[1] for col in columns]
-        
-        print(f"    - {table_name}: {count} records, {len(columns)} columns")
-        print(f"      Columns: {', '.join(col_names)}")
-    
-    print(f"\n  • Total Records: {total_records}")
-    
-    conn.close()
-    print("="*80 + "\n")
-
-def quick_view():
-    """Quick view of latest data"""
-    print("\n" + "="*80)
-    print("⚡ QUICK VIEW (Last 5 records)")
+    print("🔍 CUSTOM SQL QUERY")
     print("="*80)
     
     conn = get_connection()
     if not conn:
         return
     
-    # Latest 5 price records with ALL columns
-    btc_columns = get_table_columns('btc_daily')
-    if btc_columns:
-        df = pd.read_sql_query(f"""
-            SELECT {', '.join(btc_columns)}
-            FROM btc_daily 
-            ORDER BY date DESC 
-            LIMIT 5
-        """, conn)
-        if not df.empty:
-            print("\n📊 Latest Prices:")
-            print(df.to_string(index=False))
+    print("\nAvailable Tables:")
+    table_info = get_table_info()
+    for table_name in table_info:
+        print(f"  - {table_name} ({table_info[table_name]['count']} records)")
     
-    # Latest prediction with ALL columns
-    pred_columns = get_table_columns('predictions')
-    if pred_columns:
-        pred = pd.read_sql_query(f"""
-            SELECT {', '.join(pred_columns)}
-            FROM predictions 
-            ORDER BY date DESC 
-            LIMIT 1
-        """, conn)
-        if not pred.empty:
-            print("\n🎯 Latest Prediction:")
-            print(pred.to_string(index=False))
+    print("\nEnter your SQL query (or 'exit' to go back):")
+    print("Example: SELECT * FROM btc_price_history LIMIT 10")
     
-    # Performance
-    perf_columns = get_table_columns('performance')
-    if perf_columns:
-        perf = pd.read_sql_query(f"""
-            SELECT {', '.join(perf_columns)}
-            FROM performance 
-            ORDER BY date DESC 
-            LIMIT 1
-        """, conn)
-        if not perf.empty and 'direction_accuracy' in perf.columns:
-            print(f"\n📈 Current Accuracy: {perf['direction_accuracy'].iloc[0]:.1f}% ({perf['total_predictions'].iloc[0]} predictions)")
+    while True:
+        query = input("\nSQL> ").strip()
+        
+        if query.lower() == 'exit':
+            break
+        
+        if not query:
+            continue
+        
+        try:
+            df = pd.read_sql_query(query, conn)
+            if df.empty:
+                print("✅ Query executed successfully. No results returned.")
+            else:
+                print(f"\n✅ {len(df)} records returned:")
+                print(df.to_string(index=False))
+                
+                # Option to save
+                save = input("\nSave this data? (y/n): ").strip().lower()
+                if save == 'y':
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    filename = os.path.join(EXPORT_DIR, f'query_result_{timestamp}.csv')
+                    df.to_csv(filename, index=False)
+                    print(f"✅ Data saved to: {filename}")
+                
+        except Exception as e:
+            print(f"❌ Query error: {e}")
     
     conn.close()
-    print("="*80 + "\n")
 
 # ============================================
-# 6. MAIN MENU
+# 4. ZIP AND COMPRESS
+# ============================================
+
+def create_zip_export():
+    """Create a ZIP file with all exports"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    zip_filename = os.path.join(EXPORT_DIR, f'btc_export_{timestamp}.zip')
+    
+    print("\n" + "="*80)
+    print("📦 CREATING ZIP EXPORT (MySQL)")
+    print("="*80)
+    
+    # First, export all formats
+    print("📤 Exporting data...")
+    export_to_excel()
+    export_to_csv()
+    export_to_json()
+    
+    # Find all export folders and files
+    export_items = []
+    for item in os.listdir(EXPORT_DIR):
+        item_path = os.path.join(EXPORT_DIR, item)
+        if os.path.isfile(item_path) and item.endswith('.xlsx'):
+            export_items.append(item_path)
+        elif os.path.isdir(item_path) and (item.startswith('csv_export_') or item.startswith('json_export_')):
+            export_items.append(item_path)
+    
+    if not export_items:
+        print("❌ No exports found to zip")
+        return False
+    
+    print(f"\n📦 Creating ZIP file: {zip_filename}")
+    
+    with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for item in export_items:
+            if os.path.isfile(item):
+                zipf.write(item, os.path.basename(item))
+            else:
+                for root, dirs, files in os.walk(item):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        arcname = os.path.join(os.path.basename(item), file)
+                        zipf.write(file_path, arcname)
+    
+    print(f"\n✅ ZIP export created: {zip_filename}")
+    print(f"📊 Size: {os.path.getsize(zip_filename) / (1024*1024):.2f} MB")
+    
+    return True
+
+# ============================================
+# 5. MAIN MENU
 # ============================================
 
 def show_menu():
     """Display main menu"""
     print("\n" + "="*80)
-    print("📊 BTC DATABASE MANAGER (rough.py)")
+    print("📊 BTC DATA EXPORTER (MySQL)")
     print("="*80)
     print("\nSelect an option:")
-    print("  1. 📊 View BTC Daily Data")
-    print("  2. 🎯 View Predictions History")
-    print("  3. 📈 View Performance Metrics")
-    print("  4. 📤 Export to Excel (ALL Columns)")
-    print("  5. 🔍 Analyze Data")
-    print("  6. ⚡ Quick View")
-    print("  7. 📋 Database Info")
-    print("  8. 🗑️ Delete Old Data (older than 365 days)")
-    print("  9. 🗑️ Clear All Predictions")
-    print(" 10. 🗑️ Clear ALL Data (WARNING!)")
-    print(" 11. ❌ Exit")
+    print("  1. 📤 Export to Excel (10 Sheets with Analysis)")
+    print("  2. 📤 Export to CSV (Separate files per table)")
+    print("  3. 📤 Export to JSON (Separate files per table)")
+    print("  4. 📤 Export ALL Formats (Excel + CSV + JSON)")
+    print("  5. 📦 Create ZIP Archive with All Exports")
+    print("  6. 📊 View Database Tables")
+    print("  7. 🔍 Run Custom SQL Query")
+    print("  8. 📋 Database Information")
+    print("  9. 🔌 Test Database Connection")
+    print(" 10. ❌ Exit")
     print("="*80)
 
-def view_all_tables():
+def view_database_tables():
     """View all tables in database"""
+    print("\n" + "="*80)
+    print("📊 DATABASE TABLES")
+    print("="*80)
+    
+    table_info = get_table_info()
+    if not table_info:
+        print("❌ No tables found or connection failed")
+        return
+    
     conn = get_connection()
     if not conn:
         return
     
-    cursor = conn.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    tables = cursor.fetchall()
-    
-    print("\n" + "="*80)
-    print("📋 DATABASE TABLES")
-    print("="*80)
-    
-    for table in tables:
-        table_name = table[0]
-        cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
-        count = cursor.fetchone()[0]
-        print(f"  • {table_name}: {count} records")
+    for table_name, info in table_info.items():
+        print(f"\n📋 Table: {table_name}")
+        print(f"   Records: {info['count']}")
+        print(f"   Columns: {', '.join(info['columns'])}")
+        
+        # Show sample data
+        try:
+            df = pd.read_sql_query(f"SELECT * FROM {table_name} LIMIT 3", conn)
+            if not df.empty:
+                print(f"   Sample Data:")
+                print(df.to_string(index=False))
+        except:
+            pass
     
     conn.close()
+    print("\n" + "="*80)
+
+def show_database_info():
+    """Show database information"""
+    print("\n" + "="*80)
+    print("📋 DATABASE INFORMATION (MySQL)")
+    print("="*80)
+    
+    print(f"  • Host: {DB_CONFIG['host']}")
+    print(f"  • Database: {DB_CONFIG['database']}")
+    print(f"  • User: {DB_CONFIG['user']}")
+    
+    conn = get_connection()
+    if not conn:
+        return
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT VERSION()")
+        version = cursor.fetchone()
+        print(f"  • MySQL Version: {version[0]}")
+        conn.close()
+    except:
+        pass
+    
+    table_info = get_table_info()
+    if table_info:
+        print(f"\n  • Tables:")
+        total_records = 0
+        for table_name, info in table_info.items():
+            print(f"    - {table_name}: {info['count']} records, {len(info['columns'])} columns")
+            total_records += info['count']
+        print(f"\n  • Total Records: {total_records}")
+    
     print("="*80 + "\n")
+
+# ============================================
+# 6. MAIN FUNCTION
+# ============================================
 
 def main():
     """Main function"""
-    # Check if database exists
-    if not os.path.exists(DB_PATH):
-        print(f"❌ Database '{DB_PATH}' not found!")
-        print("Please run btc_pipeline.py first to create the database.")
+    print("\n" + "="*80)
+    print("🚀 BTC DATA EXPORTER (MySQL)")
+    print(f"📁 Database: {DB_CONFIG['database']} @ {DB_CONFIG['host']}")
+    print(f"📁 Export Directory: {EXPORT_DIR}")
+    print("="*80)
+    
+    # Test connection first
+    if not test_connection():
+        print("\n❌ Cannot connect to database. Please check your .env file.")
+        print("Make sure MySQL is running and credentials are correct.")
         return
     
     while True:
         show_menu()
-        choice = input("\nEnter your choice (1-11): ").strip()
+        choice = input("\nEnter your choice (1-10): ").strip()
         
         if choice == '1':
-            view_all_data()
-        elif choice == '2':
-            view_predictions()
-        elif choice == '3':
-            view_performance()
-        elif choice == '4':
             export_to_excel()
+        elif choice == '2':
+            export_to_csv()
+        elif choice == '3':
+            export_to_json()
+        elif choice == '4':
+            export_all_formats()
         elif choice == '5':
-            analyze_data()
+            create_zip_export()
         elif choice == '6':
-            quick_view()
+            view_database_tables()
         elif choice == '7':
-            show_database_info()
+            query_data()
         elif choice == '8':
-            delete_old_data(365)
+            show_database_info()
         elif choice == '9':
-            clear_predictions()
+            test_connection()
         elif choice == '10':
-            clear_all_data()
-        elif choice == '11':
             print("\n👋 Goodbye!")
             break
         else:

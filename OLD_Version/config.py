@@ -16,6 +16,7 @@ MAX_DAILY_CHANGE = 0.12  # 12% max daily change (sanity check)
 # Feature Engineering - NEW
 USE_FEATURE_ENGINEERING = True  # Set to True to use 40+ technical indicators
 USE_FEATURES = True  # Alias for USE_FEATURE_ENGINEERING
+
 # LSTM parameters - UPDATED for better performance
 LSTM_SEQ_LENGTH = 30  # Increased from 30 for better context
 TRAIN_SPLIT = 0.85    # More training data

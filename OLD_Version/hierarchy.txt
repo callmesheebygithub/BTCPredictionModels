@@ -1,0 +1,61 @@
+btc_predictor/
+│
+├── 📁 data/                           # Data fetching & management
+│   ├── __init__.py
+│   ├── pipeline.py                    # DataPipeline class
+│   └── yahoo_fetcher.py               # YahooDataFetcher class
+│
+├── 📁 database/                       # Database operations
+│   ├── __init__.py
+│   └── db_manager.py                  # DatabaseManager class
+│
+├── 📁 models/                         # All ML models
+│   ├── __init__.py
+│   ├── lstm_model.py                  # LSTMPredictor, ModelTrainer
+│   ├── ensemble.py                    # DynamicEnsemble class
+│   ├── advanced_ml.py                 # AdvancedMLWrapper class
+│   │
+│   └── 📁 v20260903_094502/           # Model version (example)
+│       ├── metadata.json
+│       ├── model.pth
+│       ├── scaler.pkl
+│       └── train_info.json
+│
+├── 📁 prediction/                     # Prediction & forecasting
+│   ├── __init__.py
+│   ├── predictor.py                   # EnhancedSelfLearningPredictor
+│   ├── confidence.py                  # ConfidenceCalculator
+│   ├── intervals.py                   # IntervalCalculator
+│   └── signal.py                      # SignalGenerator
+│
+├── 📁 validation/                     # Model validation
+│   ├── __init__.py
+│   ├── champion.py                    # ChampionChallenger class
+│   └── walk_forward.py                # WalkForwardValidator class
+│
+├── 📁 utils/                          # Utility functions
+│   ├── __init__.py
+│   └── helpers.py                     # print_success, print_info, etc.
+│
+├── 📁 __pycache__/                    # Python cache (auto-generated)
+│
+├── 📄 main.py                         # 🚀 ENTRY POINT - Run this
+├── 📄 config.py                       # Configuration settings
+├── 📄 email_notifier.py               # Email notifications
+├── 📄 email_config.json               # Email credentials (auto-created)
+│
+├── 📄 requirements.txt                # Python dependencies
+├── 📄 btc_data.db                     # SQLite database (auto-created)
+├── 📄 btc_predictor.log               # Log file (auto-created)
+├── 📄 train_date.txt                  # Last training date (auto-created)
+│
+├── 📄 rough.py                        # Database viewer & exporter
+├── 📄 reset_db.py                     # Reset predictions table
+├── 📄 check_files.py                  # Check for null bytes
+├── 📄 fix_files.py                    # Fix corrupted files
+├── 📄 test_email.py                   # Test email configuration
+├── 📄 dashboard.py                    # Streamlit dashboard (optional)
+├── 📄 DataDownload.py                 # Data download utility
+├── 📄 yahoo_daily_updater.py          # Yahoo daily update utility
+│
+└── 📄 btc_data_export_*.xlsx          # Excel exports (auto-generated)

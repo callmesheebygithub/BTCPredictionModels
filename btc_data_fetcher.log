@@ -1,0 +1,39 @@
+2026-09-04 07:38:03,636 - INFO - Connecting to MySQL server at localhost...
+2026-09-04 07:38:03,649 - INFO - Checking if database 'bitcoin_db' exists...
+2026-09-04 07:38:03,691 - INFO - Creating table 'btc_price_history'...
+2026-09-04 07:38:03,798 - INFO - Creating table 'predictions'...
+2026-09-04 07:38:03,868 - INFO - Creating table 'performance'...
+2026-09-04 07:38:03,939 - INFO - 
+============================================================
+2026-09-04 07:38:03,942 - INFO - ============================================================
+2026-09-04 07:38:03,942 - INFO - Database: bitcoin_db
+2026-09-04 07:38:03,943 - INFO - Tables: 3
+2026-09-04 07:38:03,956 - INFO -   � btc_price_history: 0 records
+2026-09-04 07:38:03,959 - INFO -   � performance: 0 records
+2026-09-04 07:38:03,963 - INFO -   � predictions: 0 records
+2026-09-04 07:38:03,963 - INFO - ============================================================
+2026-09-04 07:38:03,963 - INFO - ============================================================
+2026-09-04 07:38:03,966 - INFO - ============================================================
+2026-09-04 07:38:06,786 - INFO - Columns: ['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
+2026-09-04 07:39:37,213 - INFO - 🚀 Starting Bitcoin Data Fetcher...
+2026-09-04 07:39:37,213 - INFO - Connecting to MySQL server at localhost...
+2026-09-04 07:39:37,250 - INFO - Checking if database 'bitcoin_db' exists...
+2026-09-04 07:39:37,253 - INFO - ✅ Database 'bitcoin_db' created/verified
+2026-09-04 07:39:37,281 - INFO - Creating table 'btc_price_history' with correct data types...
+2026-09-04 07:39:37,347 - INFO - ✅ Table 'btc_price_history' created successfully
+2026-09-04 07:39:37,348 - INFO - ✅ Database setup completed successfully!
+2026-09-04 07:39:37,352 - INFO - 📅 No existing data. Starting from 2014-09-17
+2026-09-04 07:39:37,352 - INFO - 📥 Fetching BTC data from 2014-09-17 to 2026-09-04
+2026-09-04 07:39:40,220 - INFO - ✅ Successfully fetched 4370 records
+2026-09-04 07:39:40,237 - INFO - ✅ Data cleaned: 4370 records ready for insertion
+2026-09-04 07:39:45,503 - INFO - ✅ Database update: 4370 inserted, 0 updated
+2026-09-04 07:39:45,510 - INFO - ============================================================
+2026-09-04 07:39:45,511 - INFO - 🎯 BITCOIN DATA FETCH COMPLETED
+2026-09-04 07:39:45,511 - INFO - 📊 Total records: 4370
+2026-09-04 07:39:45,511 - INFO - 📅 Earliest: 2014-09-17
+2026-09-04 07:39:45,512 - INFO - 📅 Latest: 2026-09-03
+2026-09-04 07:39:45,513 - INFO - 💰 Min price: $178.10
+2026-09-04 07:39:45,514 - INFO - 💰 Max price: $124,752.53
+2026-09-04 07:39:45,514 - INFO - 💰 Avg price: $29,404.40
+2026-09-04 07:39:45,514 - INFO - ============================================================
+2026-09-04 07:39:45,515 - INFO - 🔒 Database connection closed

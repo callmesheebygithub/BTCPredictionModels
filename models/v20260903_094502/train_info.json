@@ -1,8 +1,0 @@
-{
-    "train_start": "2014-09-17",
-    "train_end": "2023-01-30",
-    "test_start": "2024-11-16",
-    "test_end": "2026-09-02",
-    "num_features": 5,
-    "seq_length": 30
-}
