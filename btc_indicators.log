@@ -614,3 +614,824 @@ mysql.connector.errors.ProgrammingError: 1064 (42000): You have an error in your
 2026-09-04 11:50:26,037 | INFO | MySQL connection pool created.
 2026-09-04 11:50:26,057 | INFO | btc_daily_indicators verified.
 2026-09-04 11:50:26,059 | INFO | Fetching BTC price history...
+2026-09-04 11:50:26,712 | INFO | Loaded 4,370 price records.
+2026-09-04 11:50:26,752 | INFO | Calculating indicators for 4370 rows...
+2026-09-04 11:50:29,794 | INFO | Detected 2993 historical swings.
+2026-09-04 12:25:30,828 - INFO - Database configuration loaded successfully.
+2026-09-04 12:25:30,829 - INFO - ======================================================================
+2026-09-04 12:25:30,829 - INFO - BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 12:25:30,829 - INFO - ======================================================================
+2026-09-04 12:25:30,940 - INFO - MySQL connection pool created.
+2026-09-04 12:25:30,952 - INFO - btc_daily_indicators verified.
+2026-09-04 12:25:30,954 - INFO - Fetching BTC price history...
+2026-09-04 12:25:31,500 - INFO - Loaded 4,370 price records.
+2026-09-04 12:25:31,522 - INFO - Calculating indicators for 4,370 rows...
+2026-09-04 12:25:33,304 - INFO - Detected 2,993 historical swings.
+2026-09-04 12:25:33,519 - INFO - Structural precomputation completed in 0.21s.
+2026-09-04 12:25:33,630 - INFO - Structural progress: 500/4,370 (11.4%) | 4793 rows/s | ETA 0.8s
+2026-09-04 12:25:33,746 - INFO - Structural progress: 1,000/4,370 (22.9%) | 4547 rows/s | ETA 0.7s
+2026-09-04 12:25:33,856 - INFO - Structural progress: 1,500/4,370 (34.3%) | 4542 rows/s | ETA 0.6s
+2026-09-04 12:25:33,963 - INFO - Structural progress: 2,000/4,370 (45.8%) | 4571 rows/s | ETA 0.5s
+2026-09-04 12:25:34,070 - INFO - Structural progress: 2,500/4,370 (57.2%) | 4590 rows/s | ETA 0.4s
+2026-09-04 12:25:34,183 - INFO - Structural progress: 3,000/4,370 (68.6%) | 4562 rows/s | ETA 0.3s
+2026-09-04 12:25:34,303 - INFO - Structural progress: 3,500/4,370 (80.1%) | 4506 rows/s | ETA 0.2s
+2026-09-04 12:25:34,409 - INFO - Structural progress: 4,000/4,370 (91.5%) | 4527 rows/s | ETA 0.1s
+2026-09-04 12:25:34,492 - INFO - Structural progress: 4,370/4,370 (100.0%) | 4522 rows/s | ETA 0.0s
+2026-09-04 12:25:37,792 - INFO - Indicator calculation completed in 6.27s.
+2026-09-04 12:25:37,798 - INFO - Running final validation...
+2026-09-04 12:25:37,824 - INFO - Final validation passed: 4070 rows.
+2026-09-04 12:25:37,825 - INFO - Writing indicators to database...
+2026-09-04 12:25:38,961 - ERROR - BUILD FAILED: 1054 (42S22): Unknown column 'ma_7_slope' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Unknown column 'ma_7_slope' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\rough.py", line 1930, in main
+    db.replace_table_safely(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        indicators
+        ^^^^^^^^^^
+    )
+    ^
+  File "D:\btc_predictor\rough.py", line 323, in replace_table_safely
+    self.insert_batch(
+    ~~~~~~~~~~~~~~~~~^
+        df,
+        ^^^
+        table_name=staging,
+        ^^^^^^^^^^^^^^^^^^^
+        connection=conn
+        ^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\btc_predictor\rough.py", line 411, in insert_batch
+    cursor.executemany(sql, batch)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 473, in executemany
+    return self.execute(cast(str, stmt))
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'ma_7_slope' in 'field list'
+2026-09-04 12:29:21,787 | ERROR | BUILD FAILED: 'close_price'
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pandas\core\indexes\base.py", line 3641, in get_loc
+    return self._engine.get_loc(casted_key)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "pandas/_libs/index.pyx", line 168, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/index.pyx", line 197, in pandas._libs.index.IndexEngine.get_loc
+  File "pandas/_libs/hashtable_class_helper.pxi", line 7668, in pandas._libs.hashtable.PyObjectHashTable.get_item
+  File "pandas/_libs/hashtable_class_helper.pxi", line 7676, in pandas._libs.hashtable.PyObjectHashTable.get_item
+KeyError: 'close_price'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\indicators_table_production.py", line 2477, in main
+    indicators = calculate_indicators(df)
+  File "D:\btc_predictor\indicators_table_production.py", line 2117, in calculate_indicators
+    ) = calculate_signal(row)
+        ~~~~~~~~~~~~~~~~^^^^^
+  File "D:\btc_predictor\indicators_table_production.py", line 1554, in calculate_signal
+    row["close_price"] > row["bb_upper"]
+    ~~~^^^^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pandas\core\series.py", line 959, in __getitem__
+    return self._get_value(key)
+           ~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pandas\core\series.py", line 1046, in _get_value
+    loc = self.index.get_loc(label)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\pandas\core\indexes\base.py", line 3648, in get_loc
+    raise KeyError(key) from err
+KeyError: 'close_price'
+2026-09-04 12:58:06,280 - INFO - Database configuration loaded successfully.
+2026-09-04 12:58:06,281 - INFO - ======================================================================
+2026-09-04 12:58:06,281 - INFO - BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 12:58:06,281 - INFO - ======================================================================
+2026-09-04 12:58:06,380 - INFO - MySQL connection pool created.
+2026-09-04 12:58:06,389 - INFO - btc_daily_indicators verified.
+2026-09-04 12:58:06,391 - INFO - Fetching BTC price history...
+2026-09-04 12:58:07,037 - INFO - Loaded 4,370 price records.
+2026-09-04 12:58:07,060 - INFO - Calculating indicators for 4,370 rows...
+2026-09-04 12:58:09,018 - INFO - Detected 2,993 historical swings.
+2026-09-04 12:58:09,255 - INFO - Structural precomputation completed in 0.24s.
+2026-09-04 12:58:09,373 - INFO - Structural progress: 500/4,370 (11.4%) | 4529 rows/s | ETA 0.9s
+2026-09-04 12:58:09,492 - INFO - Structural progress: 1,000/4,370 (22.9%) | 4356 rows/s | ETA 0.8s
+2026-09-04 12:58:09,609 - INFO - Structural progress: 1,500/4,370 (34.3%) | 4328 rows/s | ETA 0.7s
+2026-09-04 12:58:09,721 - INFO - Structural progress: 2,000/4,370 (45.8%) | 4363 rows/s | ETA 0.5s
+2026-09-04 12:58:09,842 - INFO - Structural progress: 2,500/4,370 (57.2%) | 4316 rows/s | ETA 0.4s
+2026-09-04 12:58:09,955 - INFO - Structural progress: 3,000/4,370 (68.6%) | 4336 rows/s | ETA 0.3s
+2026-09-04 12:58:10,066 - INFO - Structural progress: 3,500/4,370 (80.1%) | 4356 rows/s | ETA 0.2s
+2026-09-04 12:58:10,178 - INFO - Structural progress: 4,000/4,370 (91.5%) | 4371 rows/s | ETA 0.1s
+2026-09-04 12:58:10,272 - INFO - Structural progress: 4,370/4,370 (100.0%) | 4332 rows/s | ETA 0.0s
+2026-09-04 12:58:13,871 - INFO - Indicator calculation completed in 6.81s.
+2026-09-04 12:58:13,878 - INFO - Running final validation...
+2026-09-04 12:58:13,920 - INFO - Final validation passed: 4070 rows.
+2026-09-04 12:58:13,920 - INFO - Writing indicators to database...
+2026-09-04 12:58:15,091 - ERROR - BUILD FAILED: 1054 (42S22): Unknown column 'ma_trend' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Unknown column 'ma_trend' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\rough.py", line 1930, in main
+    db.replace_table_safely(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        indicators
+        ^^^^^^^^^^
+    )
+    ^
+  File "D:\btc_predictor\rough.py", line 323, in replace_table_safely
+    self.insert_batch(
+    ~~~~~~~~~~~~~~~~~^
+        df,
+        ^^^
+        table_name=staging,
+        ^^^^^^^^^^^^^^^^^^^
+        connection=conn
+        ^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\btc_predictor\rough.py", line 411, in insert_batch
+    cursor.executemany(sql, batch)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 473, in executemany
+    return self.execute(cast(str, stmt))
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'ma_trend' in 'field list'
+2026-09-04 12:59:33,428 - INFO - Database configuration loaded successfully.
+2026-09-04 12:59:33,429 - INFO - ======================================================================
+2026-09-04 12:59:33,429 - INFO - BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 12:59:33,429 - INFO - ======================================================================
+2026-09-04 12:59:33,520 - INFO - MySQL connection pool created.
+2026-09-04 12:59:33,532 - INFO - btc_daily_indicators verified.
+2026-09-04 12:59:33,533 - INFO - Fetching BTC price history...
+2026-09-04 12:59:34,070 - INFO - Loaded 4,370 price records.
+2026-09-04 12:59:34,099 - INFO - Calculating indicators for 4,370 rows...
+2026-09-04 12:59:36,022 - INFO - Detected 2,993 historical swings.
+2026-09-04 12:59:36,252 - INFO - Structural precomputation completed in 0.23s.
+2026-09-04 12:59:36,386 - INFO - Structural progress: 500/4,370 (11.4%) | 3961 rows/s | ETA 1.0s
+2026-09-04 12:59:36,501 - INFO - Structural progress: 1,000/4,370 (22.9%) | 4137 rows/s | ETA 0.8s
+2026-09-04 12:59:36,619 - INFO - Structural progress: 1,500/4,370 (34.3%) | 4174 rows/s | ETA 0.7s
+2026-09-04 12:59:36,741 - INFO - Structural progress: 2,000/4,370 (45.8%) | 4156 rows/s | ETA 0.6s
+2026-09-04 12:59:36,871 - INFO - Structural progress: 2,500/4,370 (57.2%) | 4088 rows/s | ETA 0.5s
+2026-09-04 12:59:36,988 - INFO - Structural progress: 3,000/4,370 (68.6%) | 4119 rows/s | ETA 0.3s
+2026-09-04 12:59:37,103 - INFO - Structural progress: 3,500/4,370 (80.1%) | 4149 rows/s | ETA 0.2s
+2026-09-04 12:59:37,218 - INFO - Structural progress: 4,000/4,370 (91.5%) | 4171 rows/s | ETA 0.1s
+2026-09-04 12:59:37,304 - INFO - Structural progress: 4,370/4,370 (100.0%) | 4184 rows/s | ETA 0.0s
+2026-09-04 12:59:40,793 - INFO - Indicator calculation completed in 6.69s.
+2026-09-04 12:59:40,800 - INFO - Running final validation...
+2026-09-04 12:59:40,830 - INFO - Final validation passed: 4070 rows.
+2026-09-04 12:59:40,831 - INFO - Writing indicators to database...
+2026-09-04 12:59:42,089 - ERROR - BUILD FAILED: 1054 (42S22): Unknown column 'rsi' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Unknown column 'rsi' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\rough.py", line 1930, in main
+    db.replace_table_safely(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        indicators
+        ^^^^^^^^^^
+    )
+    ^
+  File "D:\btc_predictor\rough.py", line 323, in replace_table_safely
+    self.insert_batch(
+    ~~~~~~~~~~~~~~~~~^
+        df,
+        ^^^
+        table_name=staging,
+        ^^^^^^^^^^^^^^^^^^^
+        connection=conn
+        ^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\btc_predictor\rough.py", line 411, in insert_batch
+    cursor.executemany(sql, batch)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 473, in executemany
+    return self.execute(cast(str, stmt))
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'rsi' in 'field list'
+2026-09-04 13:00:48,888 - INFO - Database configuration loaded successfully.
+2026-09-04 13:00:48,888 - INFO - ======================================================================
+2026-09-04 13:00:48,889 - INFO - BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 13:00:48,889 - INFO - ======================================================================
+2026-09-04 13:00:49,028 - INFO - MySQL connection pool created.
+2026-09-04 13:00:49,038 - INFO - btc_daily_indicators verified.
+2026-09-04 13:00:49,040 - INFO - Fetching BTC price history...
+2026-09-04 13:00:49,573 - INFO - Loaded 4,370 price records.
+2026-09-04 13:00:49,597 - INFO - Calculating indicators for 4,370 rows...
+2026-09-04 13:00:51,520 - INFO - Detected 2,993 historical swings.
+2026-09-04 13:00:51,750 - INFO - Structural precomputation completed in 0.23s.
+2026-09-04 13:00:51,865 - INFO - Structural progress: 500/4,370 (11.4%) | 4627 rows/s | ETA 0.8s
+2026-09-04 13:00:51,999 - INFO - Structural progress: 1,000/4,370 (22.9%) | 4134 rows/s | ETA 0.8s
+2026-09-04 13:00:52,112 - INFO - Structural progress: 1,500/4,370 (34.3%) | 4228 rows/s | ETA 0.7s
+2026-09-04 13:00:52,229 - INFO - Structural progress: 2,000/4,370 (45.8%) | 4243 rows/s | ETA 0.6s
+2026-09-04 13:00:52,347 - INFO - Structural progress: 2,500/4,370 (57.2%) | 4239 rows/s | ETA 0.4s
+2026-09-04 13:00:52,459 - INFO - Structural progress: 3,000/4,370 (68.6%) | 4277 rows/s | ETA 0.3s
+2026-09-04 13:00:52,574 - INFO - Structural progress: 3,500/4,370 (80.1%) | 4286 rows/s | ETA 0.2s
+2026-09-04 13:00:52,694 - INFO - Structural progress: 4,000/4,370 (91.5%) | 4269 rows/s | ETA 0.1s
+2026-09-04 13:00:52,787 - INFO - Structural progress: 4,370/4,370 (100.0%) | 4245 rows/s | ETA 0.0s
+2026-09-04 13:00:56,188 - INFO - Indicator calculation completed in 6.59s.
+2026-09-04 13:00:56,195 - INFO - Running final validation...
+2026-09-04 13:00:56,222 - INFO - Final validation passed: 4070 rows.
+2026-09-04 13:00:56,223 - INFO - Writing indicators to database...
+2026-09-04 13:00:57,366 - ERROR - BUILD FAILED: 1054 (42S22): Unknown column 'rsi' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Unknown column 'rsi' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\rough.py", line 1930, in main
+    db.replace_table_safely(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        indicators
+        ^^^^^^^^^^
+    )
+    ^
+  File "D:\btc_predictor\rough.py", line 323, in replace_table_safely
+    self.insert_batch(
+    ~~~~~~~~~~~~~~~~~^
+        df,
+        ^^^
+        table_name=staging,
+        ^^^^^^^^^^^^^^^^^^^
+        connection=conn
+        ^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\btc_predictor\rough.py", line 411, in insert_batch
+    cursor.executemany(sql, batch)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 473, in executemany
+    return self.execute(cast(str, stmt))
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'rsi' in 'field list'
+2026-09-04 13:03:59,553 - INFO - Database configuration loaded successfully.
+2026-09-04 13:03:59,553 - INFO - ======================================================================
+2026-09-04 13:03:59,553 - INFO - BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 13:03:59,554 - INFO - ======================================================================
+2026-09-04 13:03:59,668 - INFO - MySQL connection pool created.
+2026-09-04 13:03:59,672 - ERROR - BUILD FAILED: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '"ma_trend" VARCHAR(20),
+
+                    "rsi" DOUBLE,
+
+                    ' at line 22
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '"ma_trend" VARCHAR(20),
+
+                    "rsi" DOUBLE,
+
+                    ' at line 22
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\rough.py", line 1877, in main
+    db.create_table()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\btc_predictor\rough.py", line 190, in create_table
+    cursor.execute(f"""
+    ~~~~~~~~~~~~~~^^^^^
+        CREATE TABLE IF NOT EXISTS {TARGET_TABLE} (
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<96 lines>...
+        )
+        ^
+    """)
+    ^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.ProgrammingError: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '"ma_trend" VARCHAR(20),
+
+                    "rsi" DOUBLE,
+
+                    ' at line 22
+2026-09-04 13:04:22,884 - INFO - Database configuration loaded successfully.
+2026-09-04 13:04:22,884 - INFO - ======================================================================
+2026-09-04 13:04:22,884 - INFO - BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 13:04:22,885 - INFO - ======================================================================
+2026-09-04 13:04:22,976 - INFO - MySQL connection pool created.
+2026-09-04 13:04:22,979 - ERROR - BUILD FAILED: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '"ma_trend" VARCHAR(20),
+
+                    rsi DOUBLE,
+
+                    ma' at line 22
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '"ma_trend" VARCHAR(20),
+
+                    rsi DOUBLE,
+
+                    ma' at line 22
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\rough.py", line 1877, in main
+    db.create_table()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\btc_predictor\rough.py", line 190, in create_table
+    cursor.execute(f"""
+    ~~~~~~~~~~~~~~^^^^^
+        CREATE TABLE IF NOT EXISTS {TARGET_TABLE} (
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<96 lines>...
+        )
+        ^
+    """)
+    ^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.ProgrammingError: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '"ma_trend" VARCHAR(20),
+
+                    rsi DOUBLE,
+
+                    ma' at line 22
+2026-09-04 13:06:31,734 - INFO - Database configuration loaded successfully.
+2026-09-04 13:06:31,735 - INFO - ======================================================================
+2026-09-04 13:06:31,735 - INFO - BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 13:06:31,735 - INFO - ======================================================================
+2026-09-04 13:06:31,830 - INFO - MySQL connection pool created.
+2026-09-04 13:06:31,836 - INFO - btc_daily_indicators verified.
+2026-09-04 13:06:31,838 - INFO - Fetching BTC price history...
+2026-09-04 13:06:32,377 - INFO - Loaded 4,370 price records.
+2026-09-04 13:06:32,400 - INFO - Calculating indicators for 4,370 rows...
+2026-09-04 13:06:34,286 - INFO - Detected 2,993 historical swings.
+2026-09-04 13:06:34,516 - INFO - Structural precomputation completed in 0.23s.
+2026-09-04 13:06:34,634 - INFO - Structural progress: 500/4,370 (11.4%) | 4506 rows/s | ETA 0.9s
+2026-09-04 13:06:34,750 - INFO - Structural progress: 1,000/4,370 (22.9%) | 4419 rows/s | ETA 0.8s
+2026-09-04 13:06:34,864 - INFO - Structural progress: 1,500/4,370 (34.3%) | 4405 rows/s | ETA 0.7s
+2026-09-04 13:06:34,995 - INFO - Structural progress: 2,000/4,370 (45.8%) | 4242 rows/s | ETA 0.6s
+2026-09-04 13:06:35,109 - INFO - Structural progress: 2,500/4,370 (57.2%) | 4269 rows/s | ETA 0.4s
+2026-09-04 13:06:35,224 - INFO - Structural progress: 3,000/4,370 (68.6%) | 4285 rows/s | ETA 0.3s
+2026-09-04 13:06:35,340 - INFO - Structural progress: 3,500/4,370 (80.1%) | 4288 rows/s | ETA 0.2s
+2026-09-04 13:06:35,455 - INFO - Structural progress: 4,000/4,370 (91.5%) | 4295 rows/s | ETA 0.1s
+2026-09-04 13:06:35,547 - INFO - Structural progress: 4,370/4,370 (100.0%) | 4271 rows/s | ETA 0.0s
+2026-09-04 13:06:38,996 - INFO - Indicator calculation completed in 6.60s.
+2026-09-04 13:06:39,003 - INFO - Running final validation...
+2026-09-04 13:06:39,023 - INFO - Final validation passed: 4070 rows.
+2026-09-04 13:06:39,023 - INFO - Writing indicators to database...
+2026-09-04 13:06:40,220 - ERROR - BUILD FAILED: 1054 (42S22): Unknown column 'rsi' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Unknown column 'rsi' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\rough.py", line 1930, in main
+    db.replace_table_safely(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        indicators
+        ^^^^^^^^^^
+    )
+    ^
+  File "D:\btc_predictor\rough.py", line 323, in replace_table_safely
+    self.insert_batch(
+    ~~~~~~~~~~~~~~~~~^
+        df,
+        ^^^
+        table_name=staging,
+        ^^^^^^^^^^^^^^^^^^^
+        connection=conn
+        ^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\btc_predictor\rough.py", line 411, in insert_batch
+    cursor.executemany(sql, batch)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 473, in executemany
+    return self.execute(cast(str, stmt))
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'rsi' in 'field list'
+2026-09-04 13:10:40,670 - INFO - Database configuration loaded successfully.
+2026-09-04 13:10:40,671 - INFO - ======================================================================
+2026-09-04 13:10:40,671 - INFO - BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 13:10:40,671 - INFO - ======================================================================
+2026-09-04 13:10:40,758 - INFO - MySQL connection pool created.
+2026-09-04 13:10:40,766 - INFO - btc_daily_indicators verified.
+2026-09-04 13:10:40,768 - INFO - Fetching BTC price history...
+2026-09-04 13:10:41,347 - INFO - Loaded 4,370 price records.
+2026-09-04 13:10:41,373 - INFO - Calculating indicators for 4,370 rows...
+2026-09-04 13:10:43,268 - INFO - Detected 2,993 historical swings.
+2026-09-04 13:10:43,519 - INFO - Structural precomputation completed in 0.25s.
+2026-09-04 13:10:43,640 - INFO - Structural progress: 500/4,370 (11.4%) | 4418 rows/s | ETA 0.9s
+2026-09-04 13:10:43,755 - INFO - Structural progress: 1,000/4,370 (22.9%) | 4378 rows/s | ETA 0.8s
+2026-09-04 13:10:43,878 - INFO - Structural progress: 1,500/4,370 (34.3%) | 4268 rows/s | ETA 0.7s
+2026-09-04 13:10:44,003 - INFO - Structural progress: 2,000/4,370 (45.8%) | 4196 rows/s | ETA 0.6s
+2026-09-04 13:10:44,119 - INFO - Structural progress: 2,500/4,370 (57.2%) | 4222 rows/s | ETA 0.4s
+2026-09-04 13:10:44,235 - INFO - Structural progress: 3,000/4,370 (68.6%) | 4233 rows/s | ETA 0.3s
+2026-09-04 13:10:44,367 - INFO - Structural progress: 3,500/4,370 (80.1%) | 4165 rows/s | ETA 0.2s
+2026-09-04 13:10:44,484 - INFO - Structural progress: 4,000/4,370 (91.5%) | 4180 rows/s | ETA 0.1s
+2026-09-04 13:10:44,575 - INFO - Structural progress: 4,370/4,370 (100.0%) | 4168 rows/s | ETA 0.0s
+2026-09-04 13:10:48,036 - INFO - Indicator calculation completed in 6.66s.
+2026-09-04 13:10:48,042 - INFO - Running final validation...
+2026-09-04 13:10:48,068 - INFO - Final validation passed: 4070 rows.
+2026-09-04 13:10:48,068 - INFO - Writing indicators to database...
+2026-09-04 13:10:49,215 - ERROR - BUILD FAILED: 1054 (42S22): Unknown column 'rsi' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Unknown column 'rsi' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\rough.py", line 1930, in main
+    db.replace_table_safely(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        indicators
+        ^^^^^^^^^^
+    )
+    ^
+  File "D:\btc_predictor\rough.py", line 323, in replace_table_safely
+    self.insert_batch(
+    ~~~~~~~~~~~~~~~~~^
+        df,
+        ^^^
+        table_name=staging,
+        ^^^^^^^^^^^^^^^^^^^
+        connection=conn
+        ^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\btc_predictor\rough.py", line 411, in insert_batch
+    cursor.executemany(sql, batch)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 473, in executemany
+    return self.execute(cast(str, stmt))
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'rsi' in 'field list'
+2026-09-04 13:11:11,672 | INFO | Database configuration loaded: user=root, host=localhost, database=bitcoin_db
+2026-09-04 13:11:11,675 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-04 13:11:11,675 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-04 13:11:11,676 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-04 13:11:11,676 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-04 13:11:11,676 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-04 13:11:11,678 | INFO | Database configuration loaded successfully.
+2026-09-04 13:11:11,678 | INFO | ======================================================================
+2026-09-04 13:11:11,679 | INFO | BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 13:11:11,679 | INFO | ======================================================================
+2026-09-04 13:11:11,766 | INFO | MySQL connection pool created.
+2026-09-04 13:11:11,772 | INFO | btc_daily_indicators verified.
+2026-09-04 13:11:11,773 | INFO | Fetching BTC price history...
+2026-09-04 13:11:12,332 | INFO | Loaded 4,370 price records.
+2026-09-04 13:11:12,358 | INFO | Calculating indicators for 4370 rows...
+2026-09-04 13:11:15,419 | INFO | Detected 2993 historical swings.
+2026-09-04 13:13:06,100 - INFO - Database configuration loaded successfully.
+2026-09-04 13:13:06,100 - INFO - ======================================================================
+2026-09-04 13:13:06,101 - INFO - BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 13:13:06,101 - INFO - ======================================================================
+2026-09-04 13:13:06,192 - INFO - MySQL connection pool created.
+2026-09-04 13:13:06,198 - INFO - btc_daily_indicators verified.
+2026-09-04 13:13:06,200 - INFO - Fetching BTC price history...
+2026-09-04 13:13:06,746 - INFO - Loaded 4,370 price records.
+2026-09-04 13:13:06,774 - INFO - Calculating indicators for 4,370 rows...
+2026-09-04 13:13:08,728 - INFO - Detected 2,993 historical swings.
+2026-09-04 13:13:08,962 - INFO - Structural precomputation completed in 0.23s.
+2026-09-04 13:13:09,086 - INFO - Structural progress: 500/4,370 (11.4%) | 4332 rows/s | ETA 0.9s
+2026-09-04 13:13:09,216 - INFO - Structural progress: 1,000/4,370 (22.9%) | 4066 rows/s | ETA 0.8s
+2026-09-04 13:13:09,336 - INFO - Structural progress: 1,500/4,370 (34.3%) | 4099 rows/s | ETA 0.7s
+2026-09-04 13:13:09,449 - INFO - Structural progress: 2,000/4,370 (45.8%) | 4181 rows/s | ETA 0.6s
+2026-09-04 13:13:09,563 - INFO - Structural progress: 2,500/4,370 (57.2%) | 4217 rows/s | ETA 0.4s
+2026-09-04 13:13:09,678 - INFO - Structural progress: 3,000/4,370 (68.6%) | 4239 rows/s | ETA 0.3s
+2026-09-04 13:13:09,794 - INFO - Structural progress: 3,500/4,370 (80.1%) | 4248 rows/s | ETA 0.2s
+2026-09-04 13:13:09,908 - INFO - Structural progress: 4,000/4,370 (91.5%) | 4266 rows/s | ETA 0.1s
+2026-09-04 13:13:10,005 - INFO - Structural progress: 4,370/4,370 (100.0%) | 4225 rows/s | ETA 0.0s
+2026-09-04 13:13:13,386 - INFO - Indicator calculation completed in 6.61s.
+2026-09-04 13:13:13,394 - INFO - Running final validation...
+2026-09-04 13:13:13,417 - INFO - Final validation passed: 4070 rows.
+2026-09-04 13:13:13,418 - INFO - Writing indicators to database...
+2026-09-04 13:13:14,583 - ERROR - BUILD FAILED: 1054 (42S22): Unknown column 'rsi' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Unknown column 'rsi' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\indicators_table_production_optimized.py", line 1930, in main
+    db.replace_table_safely(
+    ~~~~~~~~~~~~~~~~~~~~~~~^
+        indicators
+        ^^^^^^^^^^
+    )
+    ^
+  File "D:\btc_predictor\indicators_table_production_optimized.py", line 323, in replace_table_safely
+    self.insert_batch(
+    ~~~~~~~~~~~~~~~~~^
+        df,
+        ^^^
+        table_name=staging,
+        ^^^^^^^^^^^^^^^^^^^
+        connection=conn
+        ^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\btc_predictor\indicators_table_production_optimized.py", line 411, in insert_batch
+    cursor.executemany(sql, batch)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 473, in executemany
+    return self.execute(cast(str, stmt))
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'rsi' in 'field list'
+2026-09-04 13:16:43,069 - INFO - Database configuration loaded successfully.
+2026-09-04 13:16:43,070 - INFO - ======================================================================
+2026-09-04 13:16:43,070 - INFO - BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 13:16:43,070 - INFO - ======================================================================
+2026-09-04 13:16:43,162 - INFO - MySQL connection pool created.
+2026-09-04 13:16:48,123 - INFO - Auto-migrated missing database columns: rsi, macd_state, macd_crossover, bb_bandwidth, atr, support, resistance, support_touches, resistance_touches, fib_swing_high, fib_swing_low, fib_0, fib_236, fib_382, fib_500, fib_618, fib_786, fib_1000, pivot, market_structure, bos, bos_price, bos_date, choch, choch_price, choch_date, volume_avg_30, poc, vah, val, signal, confidence, signal_factors
+2026-09-04 13:16:48,132 - INFO - btc_daily_indicators verified with 109 columns.
+2026-09-04 13:16:48,134 - INFO - Fetching BTC price history...
+2026-09-04 13:16:48,249 - INFO - Loaded 4,370 price records.
+2026-09-04 13:16:48,381 - INFO - Calculating indicators for 4,370 rows...
+2026-09-04 13:16:50,322 - INFO - Detected 2,993 historical swings.
+2026-09-04 13:16:50,556 - INFO - Structural precomputation completed in 0.23s.
+2026-09-04 13:16:50,671 - INFO - Structural progress: 500/4,370 (11.4%) | 4511 rows/s | ETA 0.9s
+2026-09-04 13:16:50,787 - INFO - Structural progress: 1,000/4,370 (22.9%) | 4402 rows/s | ETA 0.8s
+2026-09-04 13:16:50,900 - INFO - Structural progress: 1,500/4,370 (34.3%) | 4408 rows/s | ETA 0.7s
+2026-09-04 13:16:51,017 - INFO - Structural progress: 2,000/4,370 (45.8%) | 4377 rows/s | ETA 0.5s
+2026-09-04 13:16:51,132 - INFO - Structural progress: 2,500/4,370 (57.2%) | 4371 rows/s | ETA 0.4s
+2026-09-04 13:16:51,247 - INFO - Structural progress: 3,000/4,370 (68.6%) | 4366 rows/s | ETA 0.3s
+2026-09-04 13:16:51,363 - INFO - Structural progress: 3,500/4,370 (80.1%) | 4359 rows/s | ETA 0.2s
+2026-09-04 13:16:51,477 - INFO - Structural progress: 4,000/4,370 (91.5%) | 4364 rows/s | ETA 0.1s
+2026-09-04 13:16:51,562 - INFO - Structural progress: 4,370/4,370 (100.0%) | 4362 rows/s | ETA 0.0s
+2026-09-04 13:16:55,024 - INFO - Indicator calculation completed in 6.64s.
+2026-09-04 13:16:55,031 - INFO - Running final validation...
+2026-09-04 13:16:55,053 - INFO - Final validation passed: 4070 rows.
+2026-09-04 13:16:55,054 - INFO - Writing indicators to database...
+2026-09-04 13:16:56,291 - INFO - Inserted 500/4070 rows.
+2026-09-04 13:16:56,588 - INFO - Inserted 1000/4070 rows.
+2026-09-04 13:16:56,777 - INFO - Inserted 1500/4070 rows.
+2026-09-04 13:16:56,971 - INFO - Inserted 2000/4070 rows.
+2026-09-04 13:16:57,168 - INFO - Inserted 2500/4070 rows.
+2026-09-04 13:16:57,367 - INFO - Inserted 3000/4070 rows.
+2026-09-04 13:16:57,555 - INFO - Inserted 3500/4070 rows.
+2026-09-04 13:16:57,736 - INFO - Inserted 4000/4070 rows.
+2026-09-04 13:16:57,770 - INFO - Inserted 4070/4070 rows.
+2026-09-04 13:16:57,920 - INFO - Indicator table replaced successfully.
+2026-09-04 13:16:57,922 - INFO - 
+2026-09-04 13:16:57,922 - INFO - ======================================================================
+2026-09-04 13:16:57,923 - INFO - BTC INDICATORS SUMMARY
+2026-09-04 13:16:57,923 - INFO - ======================================================================
+2026-09-04 13:16:57,923 - INFO - Rows: 4,070
+2026-09-04 13:16:57,925 - INFO - Date range: 2015-07-14 -> 2026-09-03
+2026-09-04 13:16:57,926 - INFO - Average close: 31,550.60
+2026-09-04 13:16:57,926 - INFO - 
+2026-09-04 13:16:57,926 - INFO - Signals:
+2026-09-04 13:16:57,929 - INFO - signal
+Neutral        2240
+Buy            1091
+Sell            721
+Strong Buy       10
+Strong Sell       8
+2026-09-04 13:16:57,930 - INFO - 
+2026-09-04 13:16:57,930 - INFO - Market Structure:
+2026-09-04 13:16:57,932 - INFO - market_structure
+Neutral    2206
+Bullish    1087
+Bearish     777
+2026-09-04 13:16:57,933 - INFO - 
+2026-09-04 13:16:57,933 - INFO - BOS:
+2026-09-04 13:16:57,937 - INFO - bos
+NaN            3118
+Bullish BOS     600
+Bearish BOS     352
+2026-09-04 13:16:57,937 - INFO - 
+2026-09-04 13:16:57,937 - INFO - CHOCH:
+2026-09-04 13:16:57,940 - INFO - choch
+NaN              3612
+Bearish CHOCH     229
+Bullish CHOCH     229
+2026-09-04 13:16:57,940 - INFO - ======================================================================
+2026-09-04 13:16:57,940 - INFO - Completed successfully in 14.87 seconds.
