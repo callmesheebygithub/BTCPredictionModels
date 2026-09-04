@@ -14,28 +14,60 @@ import os
 import json
 import time
 
-# Load environment variables
-load_dotenv()
+import os
+import logging
+from dotenv import load_dotenv
 
-# Read credentials from .env
-DB_USER = os.getenv('db_user')
-DB_PASSWORD = os.getenv('db_password')
-DB_HOST = os.getenv('db_host')
-DB_NAME = os.getenv('db_name')
+# Load .env from the same directory as this Python file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ENV_FILE = os.path.join(BASE_DIR, ".env")
+
+load_dotenv(ENV_FILE)
+
+# Read credentials
+DB_USER = os.getenv("db_user")
+DB_PASSWORD = os.getenv("db_password")
+DB_HOST = os.getenv("db_host")
+DB_NAME = os.getenv("db_name")
 
 if not all([DB_USER, DB_PASSWORD, DB_HOST, DB_NAME]):
-    raise ValueError("❌ .env file mein kuch values missing hain!")
+    missing = []
 
-# Set up logging
+    if not DB_USER:
+        missing.append("db_user")
+
+    if not DB_PASSWORD:
+        missing.append("db_password")
+
+    if not DB_HOST:
+        missing.append("db_host")
+
+    if not DB_NAME:
+        missing.append("db_name")
+
+    raise ValueError(
+        f".env file mein values missing hain: {', '.join(missing)}"
+    )
+
+# Logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s | %(levelname)s | %(message)s",
     handlers=[
-        logging.FileHandler('btc_indicators.log', encoding='utf-8'),
+        logging.FileHandler(
+            os.path.join(BASE_DIR, "btc_indicators.log"),
+            encoding="utf-8"
+        ),
         logging.StreamHandler()
     ]
 )
+
 logger = logging.getLogger(__name__)
+
+logger.info(
+    f"Database configuration loaded: "
+    f"user={DB_USER}, host={DB_HOST}, database={DB_NAME}"
+)
 
 class BTCIndicators:
     def __init__(self):

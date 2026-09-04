@@ -1,6 +1,7 @@
 """
 BTC_MYSQL_EXPORTER.py - MySQL Data Download & Export Tool
 Download Bitcoin data from MySQL database in multiple formats
+Includes both btc_price_history and btc_daily_indicators tables
 """
 
 import mysql.connector
@@ -17,29 +18,36 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+
+# Read credentials from .env
 DB_USER = os.getenv('db_user')
 DB_PASSWORD = os.getenv('db_password')
 DB_HOST = os.getenv('db_host')
 DB_NAME = os.getenv('db_name')
+
 # Agar koi value missing hai to error show karein
 if not all([DB_USER, DB_PASSWORD, DB_HOST, DB_NAME]):
     raise ValueError("❌ .env file mein kuch values missing hain! Please check .env file.")
+
 # ============================================
 # CONFIGURATION
 # ============================================
 
 # Database credentials from .env
 DB_CONFIG = {
-    'host': os.getenv('db_host', DB_HOST),
-    'user': os.getenv('db_user', DB_USER),
-    'password': os.getenv('db_password', DB_PASSWORD),
-    'database': os.getenv('db_name', DB_NAME)
+    'host': DB_HOST,
+    'user': DB_USER,
+    'password': DB_PASSWORD,
+    'database': DB_NAME
 }
 
 EXPORT_DIR = 'btc_exports'  # Directory for exports
 
 # Create export directory if it doesn't exist
 Path(EXPORT_DIR).mkdir(exist_ok=True)
+
+# Tables to export
+TABLES_TO_EXPORT = ['btc_price_history', 'btc_daily_indicators']
 
 # ============================================
 # DATABASE CONNECTION
@@ -159,7 +167,7 @@ def get_data_by_date_range(table_name, start_date, end_date):
 # 1. EXPORT FUNCTIONS
 # ============================================
 
-def export_to_excel(filename=None, table_name='btc_price_history'):
+def export_to_excel(filename=None):
     """Export data to Excel with multiple sheets and formatting"""
     if filename is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -177,67 +185,100 @@ def export_to_excel(filename=None, table_name='btc_price_history'):
         # Get table info
         table_info = get_table_info()
         
-        # Check if btc_price_history table exists
-        if table_name not in table_info:
-            print(f"❌ Table '{table_name}' not found!")
-            print(f"Available tables: {', '.join(table_info.keys())}")
+        # Check which tables exist
+        available_tables = [t for t in TABLES_TO_EXPORT if t in table_info]
+        
+        if not available_tables:
+            print(f"❌ No tables found! Available: {', '.join(table_info.keys())}")
             conn.close()
             return False
         
         with pd.ExcelWriter(filename, engine='openpyxl') as writer:
             
-            # Sheet 1: BTC Price History (complete)
-            print("📊 Exporting BTC price history...")
-            btc_data = pd.read_sql_query(f"SELECT * FROM {table_name} ORDER BY date", conn)
-            if not btc_data.empty:
-                btc_data.to_excel(writer, sheet_name='BTC_Price_History', index=False)
-                print(f"   ✅ {len(btc_data)} records exported")
+            sheet_count = 0
             
-            # Sheet 2: Raw Data with all columns
-            print("📊 Exporting raw data...")
-            raw_data = btc_data.copy()
-            raw_data.to_excel(writer, sheet_name='Raw_Data', index=False)
+            # Export each table
+            for table_name in available_tables:
+                print(f"📊 Exporting {table_name}...")
+                df = pd.read_sql_query(f"SELECT * FROM {table_name} ORDER BY date", conn)
+                
+                if not df.empty:
+                    # Clean sheet name (Excel max 31 chars)
+                    sheet_name = table_name[:31]
+                    df.to_excel(writer, sheet_name=sheet_name, index=False)
+                    print(f"   ✅ {len(df)} records exported to '{sheet_name}'")
+                    sheet_count += 1
             
-            # Sheet 3: Summary Statistics
-            print("📊 Creating summary statistics...")
-            summary = create_summary_sheet(btc_data)
-            summary.to_excel(writer, sheet_name='Summary', index=False)
+            # If btc_price_history exists, create analysis sheets
+            if 'btc_price_history' in available_tables:
+                btc_data = pd.read_sql_query("SELECT * FROM btc_price_history ORDER BY date", conn)
+                
+                if not btc_data.empty:
+                    # Sheet: Summary Statistics
+                    print("📊 Creating summary statistics...")
+                    summary = create_summary_sheet(btc_data)
+                    summary.to_excel(writer, sheet_name='Summary', index=False)
+                    sheet_count += 1
+                    
+                    # Sheet: Technical Indicators
+                    print("🔧 Creating technical indicators...")
+                    tech_data = create_technical_indicators(btc_data)
+                    if tech_data is not None:
+                        tech_data.to_excel(writer, sheet_name='Technical_Indicators', index=False)
+                        sheet_count += 1
+                    
+                    # Sheet: All-time Statistics
+                    print("📈 Creating all-time statistics...")
+                    all_time_stats = create_all_time_stats(btc_data)
+                    all_time_stats.to_excel(writer, sheet_name='All_Time_Stats', index=False)
+                    sheet_count += 1
+                    
+                    # Sheet: Monthly Averages
+                    print("📊 Creating monthly averages...")
+                    monthly_stats = create_monthly_stats(btc_data)
+                    monthly_stats.to_excel(writer, sheet_name='Monthly_Stats', index=False)
+                    sheet_count += 1
+                    
+                    # Sheet: Yearly Statistics
+                    print("📅 Creating yearly statistics...")
+                    yearly_stats = create_yearly_stats(btc_data)
+                    yearly_stats.to_excel(writer, sheet_name='Yearly_Stats', index=False)
+                    sheet_count += 1
+                    
+                    # Sheet: Price Distribution
+                    print("📊 Creating price distribution...")
+                    dist_data = create_price_distribution(btc_data)
+                    dist_data.to_excel(writer, sheet_name='Price_Distribution', index=False)
+                    sheet_count += 1
+                    
+                    # Sheet: Recent Data (Last 30 days)
+                    print("📊 Creating recent data...")
+                    recent_data = btc_data.tail(30) if len(btc_data) > 30 else btc_data
+                    recent_data.to_excel(writer, sheet_name='Recent_Data', index=False)
+                    sheet_count += 1
             
-            # Sheet 4: Technical Indicators
-            print("🔧 Creating technical indicators...")
-            tech_data = create_technical_indicators(btc_data)
-            if tech_data is not None:
-                tech_data.to_excel(writer, sheet_name='Technical_Indicators', index=False)
+            # If btc_daily_indicators exists, create indicators summary
+            if 'btc_daily_indicators' in available_tables:
+                indicators_data = pd.read_sql_query("SELECT * FROM btc_daily_indicators ORDER BY date", conn)
+                
+                if not indicators_data.empty:
+                    # Sheet: Indicators Summary
+                    print("📊 Creating indicators summary...")
+                    indicators_summary = create_indicators_summary(indicators_data)
+                    indicators_summary.to_excel(writer, sheet_name='Indicators_Summary', index=False)
+                    sheet_count += 1
+                    
+                    # Sheet: Latest Indicators
+                    print("📊 Creating latest indicators...")
+                    latest_indicators = indicators_data.tail(30) if len(indicators_data) > 30 else indicators_data
+                    latest_indicators.to_excel(writer, sheet_name='Latest_Indicators', index=False)
+                    sheet_count += 1
             
-            # Sheet 5: All-time Statistics
-            print("📈 Creating all-time statistics...")
-            all_time_stats = create_all_time_stats(btc_data)
-            all_time_stats.to_excel(writer, sheet_name='All_Time_Stats', index=False)
-            
-            # Sheet 6: Column Information
+            # Sheet: Column Information
             print("📋 Creating column information...")
             col_info = create_column_info_sheet(conn, table_info)
             col_info.to_excel(writer, sheet_name='Column_Info', index=False)
-            
-            # Sheet 7: Monthly Averages
-            print("📊 Creating monthly averages...")
-            monthly_stats = create_monthly_stats(btc_data)
-            monthly_stats.to_excel(writer, sheet_name='Monthly_Stats', index=False)
-            
-            # Sheet 8: Yearly Statistics
-            print("📅 Creating yearly statistics...")
-            yearly_stats = create_yearly_stats(btc_data)
-            yearly_stats.to_excel(writer, sheet_name='Yearly_Stats', index=False)
-            
-            # Sheet 9: Price Distribution
-            print("📊 Creating price distribution...")
-            dist_data = create_price_distribution(btc_data)
-            dist_data.to_excel(writer, sheet_name='Price_Distribution', index=False)
-            
-            # Sheet 10: Recent Data (Last 30 days)
-            print("📊 Creating recent data...")
-            recent_data = btc_data.tail(30) if len(btc_data) > 30 else btc_data
-            recent_data.to_excel(writer, sheet_name='Recent_Data', index=False)
+            sheet_count += 1
         
         conn.close()
         
@@ -246,7 +287,7 @@ def export_to_excel(filename=None, table_name='btc_price_history'):
         print(f"📁 File: {filename}")
         if os.path.exists(filename):
             print(f"📊 Size: {os.path.getsize(filename) / (1024*1024):.2f} MB")
-        print(f"📋 Sheets: 10")
+        print(f"📋 Sheets: {sheet_count}")
         print("="*80 + "\n")
         
         # Open file automatically (Windows only)
@@ -265,7 +306,7 @@ def export_to_excel(filename=None, table_name='btc_price_history'):
         traceback.print_exc()
         return False
 
-def export_to_csv(table_name='btc_price_history'):
+def export_to_csv():
     """Export data to CSV files"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     export_folder = os.path.join(EXPORT_DIR, f'csv_export_{timestamp}')
@@ -281,21 +322,25 @@ def export_to_csv(table_name='btc_price_history'):
     
     try:
         table_info = get_table_info()
+        exported_count = 0
         
-        for table_name in table_info:
-            print(f"📊 Exporting {table_name}...")
-            df = pd.read_sql_query(f"SELECT * FROM {table_name} ORDER BY date", conn)
-            if not df.empty:
-                filename = os.path.join(export_folder, f'{table_name}.csv')
-                df.to_csv(filename, index=False)
-                print(f"   ✅ {len(df)} records saved to {filename}")
+        # Export only specified tables
+        for table_name in TABLES_TO_EXPORT:
+            if table_name in table_info:
+                print(f"📊 Exporting {table_name}...")
+                df = pd.read_sql_query(f"SELECT * FROM {table_name} ORDER BY date", conn)
+                if not df.empty:
+                    filename = os.path.join(export_folder, f'{table_name}.csv')
+                    df.to_csv(filename, index=False)
+                    print(f"   ✅ {len(df)} records saved to {filename}")
+                    exported_count += 1
         
         conn.close()
         
         print("\n" + "="*80)
         print(f"✅ CSV EXPORT COMPLETED!")
         print(f"📁 Folder: {export_folder}")
-        print(f"📊 Files: {len(table_info)}")
+        print(f"📊 Files: {exported_count}")
         print("="*80 + "\n")
         
         return True
@@ -304,7 +349,7 @@ def export_to_csv(table_name='btc_price_history'):
         print(f"❌ Export failed: {e}")
         return False
 
-def export_to_json(table_name='btc_price_history'):
+def export_to_json():
     """Export data to JSON files"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     export_folder = os.path.join(EXPORT_DIR, f'json_export_{timestamp}')
@@ -320,25 +365,30 @@ def export_to_json(table_name='btc_price_history'):
     
     try:
         table_info = get_table_info()
+        exported_count = 0
         
-        for table_name in table_info:
-            print(f"📊 Exporting {table_name}...")
-            df = pd.read_sql_query(f"SELECT * FROM {table_name} ORDER BY date", conn)
-            if not df.empty:
-                # Convert date columns to string for JSON serialization
-                for col in df.columns:
-                    if 'date' in col.lower():
-                        df[col] = df[col].astype(str)
-                
-                filename = os.path.join(export_folder, f'{table_name}.json')
-                df.to_json(filename, orient='records', indent=2)
-                print(f"   ✅ {len(df)} records saved to {filename}")
+        # Export only specified tables
+        for table_name in TABLES_TO_EXPORT:
+            if table_name in table_info:
+                print(f"📊 Exporting {table_name}...")
+                df = pd.read_sql_query(f"SELECT * FROM {table_name} ORDER BY date", conn)
+                if not df.empty:
+                    # Convert date columns to string for JSON serialization
+                    for col in df.columns:
+                        if 'date' in col.lower():
+                            df[col] = df[col].astype(str)
+                    
+                    filename = os.path.join(export_folder, f'{table_name}.json')
+                    df.to_json(filename, orient='records', indent=2)
+                    print(f"   ✅ {len(df)} records saved to {filename}")
+                    exported_count += 1
         
         conn.close()
         
         print("\n" + "="*80)
         print(f"✅ JSON EXPORT COMPLETED!")
         print(f"📁 Folder: {export_folder}")
+        print(f"📊 Files: {exported_count}")
         print("="*80 + "\n")
         
         return True
@@ -510,17 +560,18 @@ def create_column_info_sheet(conn, table_info):
     info_data = []
     
     for table_name, info in table_info.items():
-        for col in info['columns']:
-            # Get data type
-            try:
-                cursor = conn.cursor()
-                cursor.execute(f"DESCRIBE {table_name} {col}")
-                col_info = cursor.fetchone()
-                data_type = col_info[1] if col_info else 'N/A'
-            except:
-                data_type = 'N/A'
-            
-            info_data.append([table_name, col, data_type])
+        if table_name in TABLES_TO_EXPORT:
+            for col in info['columns']:
+                # Get data type
+                try:
+                    cursor = conn.cursor()
+                    cursor.execute(f"DESCRIBE {table_name} {col}")
+                    col_info = cursor.fetchone()
+                    data_type = col_info[1] if col_info else 'N/A'
+                except:
+                    data_type = 'N/A'
+                
+                info_data.append([table_name, col, data_type])
     
     df = pd.DataFrame(info_data)
     df.columns = ['Table', 'Column', 'Data Type']
@@ -597,6 +648,61 @@ def create_price_distribution(btc_data):
     distribution = distribution.sort_values('price_range')
     
     return distribution
+
+def create_indicators_summary(indicators_data):
+    """Create summary of btc_daily_indicators table"""
+    if indicators_data.empty:
+        return pd.DataFrame()
+    
+    summary_data = []
+    
+    # Basic Info
+    summary_data.append(['METRIC', 'VALUE'])
+    summary_data.append(['Total Records', len(indicators_data)])
+    if not indicators_data.empty:
+        summary_data.append(['Date Range Start', indicators_data['date'].min()])
+        summary_data.append(['Date Range End', indicators_data['date'].max()])
+    summary_data.append(['', ''])
+    
+    # Signal Distribution
+    if 'signal_direction' in indicators_data.columns:
+        summary_data.append(['SIGNAL DISTRIBUTION', ''])
+        signal_counts = indicators_data['signal_direction'].value_counts()
+        for signal, count in signal_counts.items():
+            pct = count / len(indicators_data) * 100
+            summary_data.append([f'  {signal}', f'{count} ({pct:.1f}%)'])
+    summary_data.append(['', ''])
+    
+    # RSI Statistics
+    if 'rsi_14' in indicators_data.columns:
+        summary_data.append(['RSI STATISTICS', ''])
+        summary_data.append(['  Average', f"{indicators_data['rsi_14'].mean():.2f}"])
+        summary_data.append(['  Min', f"{indicators_data['rsi_14'].min():.2f}"])
+        summary_data.append(['  Max', f"{indicators_data['rsi_14'].max():.2f}"])
+        summary_data.append(['  Current', f"{indicators_data['rsi_14'].iloc[-1]:.2f}"])
+    summary_data.append(['', ''])
+    
+    # Trend Regime Distribution
+    if 'trend_regime' in indicators_data.columns:
+        summary_data.append(['TREND REGIME', ''])
+        regime_counts = indicators_data['trend_regime'].value_counts()
+        for regime, count in regime_counts.items():
+            if regime is not None:
+                pct = count / len(indicators_data) * 100
+                summary_data.append([f'  {regime}', f'{count} ({pct:.1f}%)'])
+    summary_data.append(['', ''])
+    
+    # Signal Score Statistics
+    if 'signal_score' in indicators_data.columns:
+        summary_data.append(['SIGNAL SCORE', ''])
+        summary_data.append(['  Average', f"{indicators_data['signal_score'].mean():.2f}"])
+        summary_data.append(['  Min', f"{indicators_data['signal_score'].min():.2f}"])
+        summary_data.append(['  Max', f"{indicators_data['signal_score'].max():.2f}"])
+        summary_data.append(['  Current', f"{indicators_data['signal_score'].iloc[-1]:.2f}"])
+    
+    df = pd.DataFrame(summary_data)
+    df.columns = ['Metric', 'Value']
+    return df
 
 # ============================================
 # 3. DATA QUERY FUNCTIONS
@@ -710,7 +816,7 @@ def show_menu():
     print("📊 BTC DATA EXPORTER (MySQL)")
     print("="*80)
     print("\nSelect an option:")
-    print("  1. 📤 Export to Excel (10 Sheets with Analysis)")
+    print("  1. 📤 Export to Excel (Complete Analysis)")
     print("  2. 📤 Export to CSV (Separate files per table)")
     print("  3. 📤 Export to JSON (Separate files per table)")
     print("  4. 📤 Export ALL Formats (Excel + CSV + JSON)")
@@ -782,8 +888,9 @@ def show_database_info():
         print(f"\n  • Tables:")
         total_records = 0
         for table_name, info in table_info.items():
-            print(f"    - {table_name}: {info['count']} records, {len(info['columns'])} columns")
-            total_records += info['count']
+            if table_name in TABLES_TO_EXPORT:
+                print(f"    - {table_name}: {info['count']} records, {len(info['columns'])} columns")
+                total_records += info['count']
         print(f"\n  • Total Records: {total_records}")
     
     print("="*80 + "\n")

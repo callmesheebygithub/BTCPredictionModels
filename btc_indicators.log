@@ -232,3 +232,385 @@
 2026-09-04 09:32:53,788 - INFO - 🔒 Connection closed
 2026-09-04 09:32:55,805 - INFO - 📧 Sending email to mdshoaibhabibai@outlook.com...
 2026-09-04 09:33:00,066 - INFO - ✅ Email sent successfully!
+2026-09-04 10:03:24,045 - INFO - ✅ Connected to database
+2026-09-04 10:03:24,045 - INFO - 
+============================================================
+2026-09-04 10:03:24,046 - INFO - 📊 CALCULATING BTC INDICATORS
+2026-09-04 10:03:24,046 - INFO - ============================================================
+2026-09-04 10:03:24,387 - INFO - ✅ Fetched 365 records
+2026-09-04 10:03:24,387 - INFO - 🔍 Calculating Support & Resistance...
+2026-09-04 10:03:24,467 - INFO - 💧 Calculating Liquidity...
+2026-09-04 10:03:24,492 - INFO - 📈 Calculating Moving Averages...
+2026-09-04 10:03:24,495 - INFO - 📊 Calculating RSI...
+2026-09-04 10:03:24,498 - INFO - 📊 Calculating MACD...
+2026-09-04 10:03:24,500 - INFO - 📊 Calculating Bollinger Bands...
+2026-09-04 10:03:24,502 - INFO - 📊 Calculating ATR...
+2026-09-04 10:03:24,505 - INFO - 📊 Calculating Fibonacci...
+2026-09-04 10:03:24,506 - INFO - 📊 Calculating Pivot Points...
+2026-09-04 10:03:24,507 - INFO - 🎯 Generating Overall Signal...
+2026-09-04 10:03:24,507 - INFO - ✅ All indicators calculated successfully!
+2026-09-04 10:03:24,508 - INFO - 🔒 Connection closed
+2026-09-04 11:09:04,329 | INFO | Database configuration loaded: user=root, host=localhost, database=bitcoin_db
+2026-09-04 11:09:04,332 | INFO | ======================================================================
+2026-09-04 11:09:04,332 | INFO | BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 11:09:04,333 | INFO | ======================================================================
+2026-09-04 11:09:04,334 | ERROR | BUILD FAILED: name 'DB_CONFIG' is not defined
+Traceback (most recent call last):
+  File "D:\btc_predictor\indicators_table_production.py", line 2413, in main
+    db.create_pool()
+    ~~~~~~~~~~~~~~^^
+  File "D:\btc_predictor\indicators_table_production.py", line 122, in create_pool
+    **DB_CONFIG
+      ^^^^^^^^^
+NameError: name 'DB_CONFIG' is not defined
+2026-09-04 11:09:53,793 | INFO | Database configuration loaded: user=root, host=localhost, database=bitcoin_db
+2026-09-04 11:09:53,796 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-04 11:09:53,796 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-04 11:09:53,796 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-04 11:09:53,797 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-04 11:09:53,798 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-04 11:09:53,799 | INFO | ======================================================================
+2026-09-04 11:09:53,800 | INFO | BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 11:09:53,800 | INFO | ======================================================================
+2026-09-04 11:09:53,800 | ERROR | BUILD FAILED: name 'DB_CONFIG' is not defined
+Traceback (most recent call last):
+  File "D:\btc_predictor\indicators_table_production.py", line 2413, in main
+    db.create_pool()
+    ~~~~~~~~~~~~~~^^
+  File "D:\btc_predictor\indicators_table_production.py", line 122, in create_pool
+    **DB_CONFIG
+      ^^^^^^^^^
+NameError: name 'DB_CONFIG' is not defined
+2026-09-04 11:11:13,779 | INFO | Database configuration loaded: user=root, host=localhost, database=bitcoin_db
+2026-09-04 11:11:13,781 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-04 11:11:13,782 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-04 11:11:13,782 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-04 11:11:13,783 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-04 11:11:13,783 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-04 11:11:13,785 | INFO | Database configuration loaded successfully.
+2026-09-04 11:11:13,785 | INFO | ======================================================================
+2026-09-04 11:11:13,786 | INFO | BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 11:11:13,786 | INFO | ======================================================================
+2026-09-04 11:11:13,888 | INFO | MySQL connection pool created.
+2026-09-04 11:11:13,892 | ERROR | BUILD FAILED: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'signal VARCHAR(30),
+                    signal_score DOUBLE,
+                   ' at line 85
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'signal VARCHAR(30),
+                    signal_score DOUBLE,
+                   ' at line 85
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\indicators_table_production.py", line 2440, in main
+    db.create_table()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\btc_predictor\indicators_table_production.py", line 190, in create_table
+    cursor.execute(f"""
+    ~~~~~~~~~~~~~~^^^^^
+        CREATE TABLE IF NOT EXISTS {TARGET_TABLE} (
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<96 lines>...
+        )
+        ^
+    """)
+    ^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.ProgrammingError: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'signal VARCHAR(30),
+                    signal_score DOUBLE,
+                   ' at line 85
+2026-09-04 11:47:12,277 | INFO | Database configuration loaded: user=root, host=localhost, database=bitcoin_db
+2026-09-04 11:47:12,280 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-04 11:47:12,281 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-04 11:47:12,282 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-04 11:47:12,282 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-04 11:47:12,282 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-04 11:47:12,284 | INFO | Database configuration loaded successfully.
+2026-09-04 11:47:12,284 | INFO | ======================================================================
+2026-09-04 11:47:12,284 | INFO | BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 11:47:12,285 | INFO | ======================================================================
+2026-09-04 11:47:12,403 | INFO | MySQL connection pool created.
+2026-09-04 11:47:12,406 | ERROR | BUILD FAILED: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''signal' VARCHAR(30),
+                    signal_score DOUBLE,
+                 ' at line 85
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''signal' VARCHAR(30),
+                    signal_score DOUBLE,
+                 ' at line 85
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\indicators_table_production.py", line 2440, in main
+    db.create_table()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\btc_predictor\indicators_table_production.py", line 190, in create_table
+    cursor.execute(f"""
+    ~~~~~~~~~~~~~~^^^^^
+        CREATE TABLE IF NOT EXISTS {TARGET_TABLE} (
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<96 lines>...
+        )
+        ^
+    """)
+    ^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.ProgrammingError: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''signal' VARCHAR(30),
+                    signal_score DOUBLE,
+                 ' at line 85
+2026-09-04 11:48:02,095 | INFO | Database configuration loaded: user=root, host=localhost, database=bitcoin_db
+2026-09-04 11:48:02,098 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-04 11:48:02,098 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-04 11:48:02,098 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-04 11:48:02,099 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-04 11:48:02,099 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-04 11:48:02,101 | INFO | Database configuration loaded successfully.
+2026-09-04 11:48:02,101 | INFO | ======================================================================
+2026-09-04 11:48:02,102 | INFO | BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 11:48:02,102 | INFO | ======================================================================
+2026-09-04 11:48:02,205 | INFO | MySQL connection pool created.
+2026-09-04 11:48:02,210 | ERROR | BUILD FAILED: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''signal' VARCHAR(30),
+                    'signal_score' DOUBLE,
+               ' at line 85
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''signal' VARCHAR(30),
+                    'signal_score' DOUBLE,
+               ' at line 85
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\indicators_table_production.py", line 2440, in main
+    db.create_table()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\btc_predictor\indicators_table_production.py", line 190, in create_table
+    cursor.execute(f"""
+    ~~~~~~~~~~~~~~^^^^^
+        CREATE TABLE IF NOT EXISTS {TARGET_TABLE} (
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<96 lines>...
+        )
+        ^
+    """)
+    ^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.ProgrammingError: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''signal' VARCHAR(30),
+                    'signal_score' DOUBLE,
+               ' at line 85
+2026-09-04 11:48:17,115 | INFO | Database configuration loaded: user=root, host=localhost, database=bitcoin_db
+2026-09-04 11:48:17,118 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-04 11:48:17,118 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-04 11:48:17,118 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-04 11:48:17,119 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-04 11:48:17,119 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-04 11:48:17,121 | INFO | Database configuration loaded successfully.
+2026-09-04 11:48:17,122 | INFO | ======================================================================
+2026-09-04 11:48:17,122 | INFO | BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 11:48:17,123 | INFO | ======================================================================
+2026-09-04 11:48:17,211 | INFO | MySQL connection pool created.
+2026-09-04 11:48:17,217 | ERROR | BUILD FAILED: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''signal' VARCHAR(30),
+                    signal_score DOUBLE,
+                 ' at line 85
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''signal' VARCHAR(30),
+                    signal_score DOUBLE,
+                 ' at line 85
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\indicators_table_production.py", line 2440, in main
+    db.create_table()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\btc_predictor\indicators_table_production.py", line 190, in create_table
+    cursor.execute(f"""
+    ~~~~~~~~~~~~~~^^^^^
+        CREATE TABLE IF NOT EXISTS {TARGET_TABLE} (
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<96 lines>...
+        )
+        ^
+    """)
+    ^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.ProgrammingError: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''signal' VARCHAR(30),
+                    signal_score DOUBLE,
+                 ' at line 85
+2026-09-04 11:49:40,743 | INFO | Database configuration loaded: user=root, host=localhost, database=bitcoin_db
+2026-09-04 11:49:40,745 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-04 11:49:40,746 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-04 11:49:40,746 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-04 11:49:40,747 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-04 11:49:40,747 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-04 11:49:40,749 | INFO | Database configuration loaded successfully.
+2026-09-04 11:49:40,750 | INFO | ======================================================================
+2026-09-04 11:49:40,750 | INFO | BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 11:49:40,751 | INFO | ======================================================================
+2026-09-04 11:49:40,844 | INFO | MySQL connection pool created.
+2026-09-04 11:49:40,848 | ERROR | BUILD FAILED: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''signal' VARCHAR(30),
+                    signal_score DOUBLE,
+                 ' at line 85
+Traceback (most recent call last):
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''signal' VARCHAR(30),
+                    signal_score DOUBLE,
+                 ' at line 85
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\btc_predictor\indicators_table_production.py", line 2440, in main
+    db.create_table()
+    ~~~~~~~~~~~~~~~^^
+  File "D:\btc_predictor\indicators_table_production.py", line 190, in create_table
+    cursor.execute(f"""
+    ~~~~~~~~~~~~~~^^^^^
+        CREATE TABLE IF NOT EXISTS {TARGET_TABLE} (
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<96 lines>...
+        )
+        ^
+    """)
+    ^^^^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "C:\Users\Muhammad Shoaib\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.ProgrammingError: 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''signal' VARCHAR(30),
+                    signal_score DOUBLE,
+                 ' at line 85
+2026-09-04 11:50:25,941 | INFO | Database configuration loaded: user=root, host=localhost, database=bitcoin_db
+2026-09-04 11:50:25,943 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-04 11:50:25,944 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-04 11:50:25,944 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-04 11:50:25,945 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-04 11:50:25,945 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-04 11:50:25,947 | INFO | Database configuration loaded successfully.
+2026-09-04 11:50:25,947 | INFO | ======================================================================
+2026-09-04 11:50:25,948 | INFO | BTC INDICATORS - FINAL PRODUCTION BUILD
+2026-09-04 11:50:25,948 | INFO | ======================================================================
+2026-09-04 11:50:26,037 | INFO | MySQL connection pool created.
+2026-09-04 11:50:26,057 | INFO | btc_daily_indicators verified.
+2026-09-04 11:50:26,059 | INFO | Fetching BTC price history...
