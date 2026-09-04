@@ -1,5 +1,5 @@
 """
-btc_dashboard_streamlit.py - BTC Indicators Dashboard in Streamlit (FIXED)
+btc_dashboard_streamlit.py - BTC Indicators Dashboard (UPDATED for improved indicators)
 """
 
 import streamlit as st
@@ -13,7 +13,7 @@ import time
 import os
 import sys
 
-# Import btc_indicators
+# Import btc_indicators (improved version)
 try:
     from btc_indicators import BTCIndicators
 except ImportError:
@@ -80,6 +80,18 @@ st.markdown("""
         font-weight: bold;
         font-size: 24px;
     }
+    .confidence-high {
+        color: #00ff88;
+        font-weight: bold;
+    }
+    .confidence-medium {
+        color: #ffd93d;
+        font-weight: bold;
+    }
+    .confidence-low {
+        color: #ff6b6b;
+        font-weight: bold;
+    }
     .stButton button {
         width: 100%;
         background: #f7931a;
@@ -90,6 +102,13 @@ st.markdown("""
     }
     .stButton button:hover {
         background: #f9a825;
+    }
+    .info-box {
+        background: #1e1e2f;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #f7931a;
+        margin: 10px 0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -216,22 +235,23 @@ with st.sidebar:
     
     st.markdown("---")
     st.markdown("### 📊 Indicators Included")
-    st.write("• Support & Resistance")
+    st.write("• Support & Resistance (with price reaction)")
+    st.write("• Market Structure (BOS/CHOCH)")
     st.write("• Moving Averages (7,20,50,100,200)")
-    st.write("• RSI (Relative Strength Index)")
+    st.write("• RSI (Wilder's Smoothing)")
     st.write("• MACD")
-    st.write("• Bollinger Bands")
-    st.write("• Fibonacci Levels")
+    st.write("• Bollinger Bands (Historical Percentile)")
+    st.write("• Fibonacci (Swing-based)")
     st.write("• Pivot Points")
-    st.write("• Liquidity Analysis")
-    st.write("• ATR (Volatility)")
+    st.write("• Volume-based Liquidity")
+    st.write("• ATR (Risk Management)")
 
 # ============================================
 # MAIN CONTENT
 # ============================================
 
 # Title
-st.markdown('<div class="main-header"><h1>🚀 BTC Indicators Dashboard</h1><p>Real-time Bitcoin Technical Analysis</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="main-header"><h1>🚀 BTC Indicators Dashboard</h1><p>Real-time Bitcoin Technical Analysis (Improved)</p></div>', unsafe_allow_html=True)
 
 # Load data if not loaded or refresh requested
 if st.session_state.loading or st.session_state.results is None:
@@ -241,7 +261,9 @@ if st.session_state.loading or st.session_state.results is None:
 if st.session_state.results:
     results = st.session_state.results
     
-    # Current Price Row
+    # ============================================
+    # TOP ROW: Current Price, Signal, RSI, ATR
+    # ============================================
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -256,12 +278,23 @@ if st.session_state.results:
         if 'overall_signal' in results:
             signal = results['overall_signal']
             direction = signal.get('direction', 'NEUTRAL')
+            confidence = signal.get('confidence', 'Unknown')
+            
+            # Signal color
             if 'BUY' in direction:
                 st.markdown('<div class="signal-buy">🟢 BUY</div>', unsafe_allow_html=True)
             elif 'SELL' in direction:
                 st.markdown('<div class="signal-sell">🔴 SELL</div>', unsafe_allow_html=True)
             else:
                 st.markdown('<div class="signal-neutral">🟡 NEUTRAL</div>', unsafe_allow_html=True)
+            
+            # Confidence
+            if confidence == 'High':
+                st.markdown(f'<p style="text-align:center;"><span class="confidence-high">Confidence: {confidence}</span></p>', unsafe_allow_html=True)
+            elif confidence == 'Medium':
+                st.markdown(f'<p style="text-align:center;"><span class="confidence-medium">Confidence: {confidence}</span></p>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<p style="text-align:center;"><span class="confidence-low">Confidence: {confidence}</span></p>', unsafe_allow_html=True)
     
     with col3:
         if 'rsi' in results:
@@ -275,16 +308,64 @@ if st.session_state.results:
     with col4:
         if 'atr' in results:
             atr = results['atr']
+            # Show ATR with percentile
             st.metric(
-                label="📊 ATR (Volatility)",
+                label="📊 ATR",
                 value=f"${atr.get('atr', 0):.2f}",
-                delta=atr.get('volatility_status', 'Normal')
+                delta=f"{atr.get('percentile', 0):.0f}th percentile"
             )
+            
+            # Show suggested stop loss if available
+            if 'overall_signal' in results and 'atr_info' in results['overall_signal']:
+                atr_info = results['overall_signal']['atr_info']
+                st.caption(f"Stop Loss: ${atr_info['suggested_stop_loss']:.2f}")
     
-    # Row 2: Support & Resistance and Moving Averages
+    # ============================================
+    # ROW 2: Market Structure & Support/Resistance
+    # ============================================
     col1, col2 = st.columns(2)
     
     with col1:
+        with st.container():
+            st.subheader("📊 Market Structure")
+            if 'market_structure' in results:
+                structure = results['market_structure']
+                
+                # Trend
+                trend = structure.get('trend_regime', 'Unknown')
+                if trend == 'Uptrend':
+                    st.success(f"📈 {trend}")
+                elif trend == 'Downtrend':
+                    st.error(f"📉 {trend}")
+                elif trend == 'Range':
+                    st.warning(f"➡️ {trend}")
+                else:
+                    st.info(f"❓ {trend}")
+                
+                # BOS (Break of Structure)
+                bos = structure.get('bos', [])
+                if bos:
+                    st.write("**Break of Structure (BOS):**")
+                    for b in bos:
+                        st.write(f"• {b['type']} at ${b['price']:,.2f}")
+                else:
+                    st.write("**BOS:** None")
+                
+                # CHOCH (Change of Character)
+                choch = structure.get('choch', [])
+                if choch:
+                    st.write("**Change of Character (CHOCH):**")
+                    for c in choch:
+                        st.write(f"• {c['type']}")
+                else:
+                    st.write("**CHOCH:** None")
+                
+                # HH/HL/LH/LL
+                if 'hh_hl_lh_ll' in structure:
+                    hh_hl = structure['hh_hl_lh_ll']
+                    st.write(f"**HH:** {hh_hl.get('HH', 0)} | **HL:** {hh_hl.get('HL', 0)} | **LH:** {hh_hl.get('LH', 0)} | **LL:** {hh_hl.get('LL', 0)}")
+    
+    with col2:
         with st.container():
             st.subheader("🎯 Support & Resistance")
             if 'support_resistance' in results:
@@ -296,70 +377,82 @@ if st.session_state.results:
                 
                 col_a, col_b = st.columns(2)
                 with col_a:
-                    st.metric(
-                        "Support",
-                        f"${support.get('price', 0):,.2f}" if support else "N/A",
-                        f"Strength: {support.get('strength', 0)}" if support else None
-                    )
-                with col_b:
-                    st.metric(
-                        "Resistance",
-                        f"${resistance.get('price', 0):,.2f}" if resistance else "N/A",
-                        f"Strength: {resistance.get('strength', 0)}" if resistance else None
-                    )
-                
-                # Support levels
-                if 'support_levels' in sr and sr['support_levels']:
-                    st.write("**Support Levels:**")
-                    supports = pd.DataFrame([
-                        {"Level": i+1, "Price": f"${s['price']:,.2f}", "Strength": f"{s['strength']} touches"}
-                        for i, s in enumerate(sr['support_levels'][:5])
-                    ])
-                    st.dataframe(supports, use_container_width=True, hide_index=True)
-                
-                # Resistance levels
-                if 'resistance_levels' in sr and sr['resistance_levels']:
-                    st.write("**Resistance Levels:**")
-                    resistances = pd.DataFrame([
-                        {"Level": i+1, "Price": f"${r['price']:,.2f}", "Strength": f"{r['strength']} touches"}
-                        for i, r in enumerate(sr['resistance_levels'][:5])
-                    ])
-                    st.dataframe(resistances, use_container_width=True, hide_index=True)
-    
-    with col2:
-        with st.container():
-            st.subheader("📈 Moving Averages")
-            if 'moving_averages' in results:
-                ma = results['moving_averages']
-                
-                ma_data = []
-                for period, data in ma.items():
-                    ma_data.append({
-                        "Period": period,
-                        "Value": f"${data['value']:,.2f}",
-                        "Trend": data.get('trend', 'Neutral')
-                    })
-                
-                ma_df = pd.DataFrame(ma_data)
-                
-                # Color code trends
-                def color_trend(val):
-                    if val == 'Bullish':
-                        return 'background-color: #00ff88; color: black'
-                    elif val == 'Bearish':
-                        return 'background-color: #ff4757; color: white'
+                    if support:
+                        st.metric(
+                            "Support",
+                            f"${support.get('price', 0):,.2f}",
+                            f"Strength: {support.get('strength', 0)}"
+                        )
                     else:
-                        return 'background-color: #ffd93d; color: black'
+                        st.metric("Support", "N/A")
                 
-                # Apply styling using map (new pandas version)
-                styled_df = ma_df.style.map(color_trend, subset=['Trend'])
-                st.dataframe(
-                    styled_df,
-                    use_container_width=True,
-                    hide_index=True
-                )
+                with col_b:
+                    if resistance:
+                        st.metric(
+                            "Resistance",
+                            f"${resistance.get('price', 0):,.2f}",
+                            f"Strength: {resistance.get('strength', 0)}"
+                        )
+                    else:
+                        st.metric("Resistance", "N/A")
+                
+                # Top support levels
+                if 'support_levels' in sr and sr['support_levels']:
+                    with st.expander("📊 All Support Levels"):
+                        supports = pd.DataFrame([
+                            {"Level": i+1, "Price": f"${s['price']:,.2f}", "Strength": f"{s['strength']} touches"}
+                            for i, s in enumerate(sr['support_levels'][:5])
+                        ])
+                        st.dataframe(supports, use_container_width=True, hide_index=True)
+                
+                # Top resistance levels
+                if 'resistance_levels' in sr and sr['resistance_levels']:
+                    with st.expander("📊 All Resistance Levels"):
+                        resistances = pd.DataFrame([
+                            {"Level": i+1, "Price": f"${r['price']:,.2f}", "Strength": f"{r['strength']} touches"}
+                            for i, r in enumerate(sr['resistance_levels'][:5])
+                        ])
+                        st.dataframe(resistances, use_container_width=True, hide_index=True)
     
-    # Row 3: RSI & MACD
+    # ============================================
+    # ROW 3: Moving Averages
+    # ============================================
+    with st.container():
+        st.subheader("📈 Moving Averages")
+        if 'moving_averages' in results:
+            ma = results['moving_averages']
+            
+            ma_data = []
+            for period, data in ma.items():
+                ma_data.append({
+                    "Period": period,
+                    "Value": f"${data['value']:,.2f}",
+                    "EMA": f"${data.get('ema', data['value']):,.2f}",
+                    "Trend": data.get('trend', 'Neutral'),
+                    "Slope": f"{data.get('slope', 0):.2f}%"
+                })
+            
+            ma_df = pd.DataFrame(ma_data)
+            
+            # Color code trends
+            def color_trend(val):
+                if 'Strong Bullish' in val or val == 'Bullish':
+                    return 'background-color: #00ff88; color: black'
+                elif 'Strong Bearish' in val or val == 'Bearish':
+                    return 'background-color: #ff4757; color: white'
+                else:
+                    return 'background-color: #ffd93d; color: black'
+            
+            styled_df = ma_df.style.map(color_trend, subset=['Trend'])
+            st.dataframe(
+                styled_df,
+                use_container_width=True,
+                hide_index=True
+            )
+    
+    # ============================================
+    # ROW 4: RSI & MACD
+    # ============================================
     col1, col2 = st.columns(2)
     
     with col1:
@@ -373,7 +466,7 @@ if st.session_state.results:
                     mode = "gauge+number+delta",
                     value = rsi.get('value', 0),
                     domain = {'x': [0, 1], 'y': [0, 1]},
-                    title = {'text': "RSI"},
+                    title = {'text': "RSI (Wilder's Smoothing)"},
                     delta = {'reference': 50},
                     gauge = {
                         'axis': {'range': [0, 100]},
@@ -411,7 +504,9 @@ if st.session_state.results:
                 
                 st.info(f"Signal Status: {macd.get('signal_status', 'Neutral')} | Histogram: {macd.get('histogram_status', 'Stable')}")
     
-    # Row 4: Bollinger Bands
+    # ============================================
+    # ROW 5: Bollinger Bands
+    # ============================================
     st.subheader("📊 Bollinger Bands")
     if 'bollinger_bands' in results:
         bb = results['bollinger_bands']
@@ -426,29 +521,38 @@ if st.session_state.results:
         with col4:
             st.metric("Position", bb.get('position', 'Inside Bands'))
         
-        st.info(f"Band Width: ${bb.get('band_width', 0):,.2f} | Squeeze: {bb.get('squeeze', 'No')}")
+        st.info(f"Band Width: ${bb.get('band_width', 0):,.2f} | Squeeze: {bb.get('squeeze', 'No')} | Percentile: {bb.get('bandwidth_percentile', 0):.0f}%")
     
-    # Row 5: Fibonacci & Pivot Points
+    # ============================================
+    # ROW 6: Fibonacci & Pivot Points
+    # ============================================
     col1, col2 = st.columns(2)
     
     with col1:
         with st.container():
-            st.subheader("📊 Fibonacci Levels")
+            st.subheader("📊 Fibonacci (Swing-based)")
             if 'fibonacci' in results:
                 fib = results['fibonacci']
                 
-                fib_data = []
-                for level, price in fib.get('fib_levels', {}).items():
-                    fib_data.append({
-                        "Level": level,
-                        "Price": f"${price:,.2f}"
-                    })
-                
-                fib_df = pd.DataFrame(fib_data)
-                st.dataframe(fib_df, use_container_width=True, hide_index=True)
-                
-                if fib.get('current_fib_level'):
-                    st.success(f"Current Level: {fib['current_fib_level']}")
+                if fib:
+                    st.write(f"**Swing High:** ${fib.get('swing_high', 0):,.2f} ({fib.get('high_date', 'N/A')})")
+                    st.write(f"**Swing Low:** ${fib.get('swing_low', 0):,.2f} ({fib.get('low_date', 'N/A')})")
+                    st.write(f"**Range:** ${fib.get('range', 0):,.2f}")
+                    
+                    fib_data = []
+                    for level, price in fib.get('fib_levels', {}).items():
+                        fib_data.append({
+                            "Level": level,
+                            "Price": f"${price:,.2f}"
+                        })
+                    
+                    fib_df = pd.DataFrame(fib_data)
+                    st.dataframe(fib_df, use_container_width=True, hide_index=True)
+                    
+                    if fib.get('current_fib_level'):
+                        st.success(f"📍 Current Level: {fib['current_fib_level']}")
+                else:
+                    st.warning("No swing points found for Fibonacci")
     
     with col2:
         with st.container():
@@ -467,9 +571,13 @@ if st.session_state.results:
                     st.metric("S1", f"${pivot.get('support_1', 0):,.2f}")
                     st.metric("S2", f"${pivot.get('support_2', 0):,.2f}")
                     st.metric("S3", f"${pivot.get('support_3', 0):,.2f}")
+                
+                st.caption(f"Nearest: {pivot.get('nearest_level', 'N/A')} (${pivot.get('distance_to_nearest', 0):.2f} away)")
     
-    # Row 6: Liquidity
-    st.subheader("💧 Liquidity Analysis")
+    # ============================================
+    # ROW 7: Liquidity Analysis
+    # ============================================
+    st.subheader("💧 Liquidity Analysis (Volume-based)")
     if 'liquidity' in results:
         liq = results['liquidity']
         
@@ -481,33 +589,78 @@ if st.session_state.results:
         with col3:
             st.metric("Volume Ratio", f"{liq.get('volume_ratio', 0):.2f}x")
         
+        # Volume Profile
+        if 'volume_profile' in liq:
+            vp = liq['volume_profile']
+            if vp:
+                col_a, col_b, col_c = st.columns(3)
+                with col_a:
+                    st.metric("POC", f"${vp.get('poc', 0):,.2f}")
+                with col_b:
+                    st.metric("VAH", f"${vp.get('vah', 0):,.2f}")
+                with col_c:
+                    st.metric("VAL", f"${vp.get('val', 0):,.2f}")
+        
+        # High Volume Nodes
         if 'high_volume_nodes' in liq and liq['high_volume_nodes']:
-            st.write("**High Volume Nodes:**")
-            nodes = pd.DataFrame([
-                {
-                    "Price Range": node.get('price_range', 'N/A'),
-                    "Volume": f"{node.get('volume', 0):,.0f}"
-                }
-                for node in liq['high_volume_nodes'][:5]
-            ])
-            st.dataframe(nodes, use_container_width=True, hide_index=True)
+            with st.expander("📊 High Volume Nodes (HVN)"):
+                hvn_data = pd.DataFrame([
+                    {
+                        "Price Range": node.get('price_range', 'N/A'),
+                        "Volume": f"{node.get('volume', 0):,.0f}"
+                    }
+                    for node in liq['high_volume_nodes'][:5]
+                ])
+                st.dataframe(hvn_data, use_container_width=True, hide_index=True)
+        
+        # Low Volume Nodes
+        if 'low_volume_nodes' in liq and liq['low_volume_nodes']:
+            with st.expander("📊 Low Volume Nodes (LVN)"):
+                lvn_data = pd.DataFrame([
+                    {
+                        "Price Range": node.get('price_range', 'N/A'),
+                        "Volume": f"{node.get('volume', 0):,.0f}"
+                    }
+                    for node in liq['low_volume_nodes'][:5]
+                ])
+                st.dataframe(lvn_data, use_container_width=True, hide_index=True)
     
-    # Signal Factors
+    # ============================================
+    # ROW 8: Signal Factors
+    # ============================================
     if 'overall_signal' in results:
         signal = results['overall_signal']
-        if 'factors' in signal and signal['factors']:
-            st.subheader("📋 Signal Factors")
-            for factor in signal['factors']:
-                st.write(f"• {factor}")
+        
+        st.subheader("📋 Signal Factors")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("**Factors:**")
+            if 'factors' in signal and signal['factors']:
+                for factor in signal['factors']:
+                    st.write(f"• {factor}")
+        
+        with col2:
+            st.write("**Weights:**")
+            if 'weights' in signal:
+                for key, weight in signal['weights'].items():
+                    st.write(f"• {key}: {weight:.0%}")
+            
+            if 'normalized_score' in signal:
+                st.metric("Normalized Score", f"{signal['normalized_score']:.2f}")
 
 else:
     st.info("👈 Click 'Refresh Data' to load indicators")
 
-# Footer
+# ============================================
+# FOOTER
+# ============================================
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #666; padding: 20px;">
     <p>🚀 BTC Indicators Dashboard | Powered by Streamlit</p>
+    <p>Indicators: S/R, Market Structure, MA, RSI, MACD, BB, Fibonacci, Pivot, Liquidity, ATR</p>
     <p>© 2026 All Rights Reserved</p>
 </div>
 """, unsafe_allow_html=True)

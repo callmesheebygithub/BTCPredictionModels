@@ -1,0 +1,122 @@
+2026-09-04 09:48:54,463 - INFO - ✅ Connected to database
+2026-09-04 09:48:54,464 - INFO - 
+============================================================
+2026-09-04 09:48:54,464 - INFO - 📊 BUILDING BTC DAILY INDICATORS TABLE (PRODUCTION)
+2026-09-04 09:48:54,464 - INFO - ============================================================
+2026-09-04 09:48:54,465 - INFO - 📊 Creating btc_daily_indicators table...
+2026-09-04 09:48:54,608 - INFO - ✅ Table created successfully!
+2026-09-04 09:48:54,676 - ERROR - ❌ Error fetching BTC data: (mysql.connector.errors.DatabaseError) 2005 (HY000): Unknown MySQL server host '123@localhost' (11003)
+(Background on this error at: https://sqlalche.me/e/20/4xp6)
+2026-09-04 09:48:54,680 - ERROR - ❌ No BTC data available
+2026-09-04 09:48:54,704 - INFO - 🔒 Connection closed
+2026-09-04 09:50:27,198 - INFO - ✅ Connected to database
+2026-09-04 09:50:27,198 - INFO - 
+============================================================
+2026-09-04 09:50:27,199 - INFO - 📊 BUILDING BTC DAILY INDICATORS TABLE (PRODUCTION)
+2026-09-04 09:50:27,199 - INFO - ============================================================
+2026-09-04 09:50:27,199 - INFO - 📊 Creating btc_daily_indicators table...
+2026-09-04 09:50:27,210 - INFO - ✅ Table created successfully!
+2026-09-04 09:50:27,759 - WARNING - ⚠️ Missing 4370 dates
+2026-09-04 09:50:27,765 - INFO - ✅ Fetched 4370 validated records
+2026-09-04 09:50:27,765 - INFO - 📊 Calculating indicators vectorized...
+2026-09-04 09:52:12,628 - INFO - ✅ Calculated indicators for 4170 days
+2026-09-04 09:52:15,331 - INFO - 📊 Inserted 500/4170 rows
+2026-09-04 09:52:15,621 - INFO - 📊 Inserted 1000/4170 rows
+2026-09-04 09:52:15,793 - INFO - 📊 Inserted 1500/4170 rows
+2026-09-04 09:52:15,963 - INFO - 📊 Inserted 2000/4170 rows
+2026-09-04 09:52:16,205 - INFO - 📊 Inserted 2500/4170 rows
+2026-09-04 09:52:16,386 - INFO - 📊 Inserted 3000/4170 rows
+2026-09-04 09:52:16,565 - INFO - 📊 Inserted 3500/4170 rows
+2026-09-04 09:52:16,730 - INFO - 📊 Inserted 4000/4170 rows
+2026-09-04 09:52:16,799 - INFO - 📊 Inserted 4170/4170 rows
+2026-09-04 09:52:16,799 - INFO - ✅ Stored 4170 rows successfully
+2026-09-04 09:52:16,825 - INFO - 
+============================================================
+2026-09-04 09:52:16,826 - INFO - 📊 TABLE SUMMARY
+2026-09-04 09:52:16,826 - INFO - ============================================================
+2026-09-04 09:52:16,827 - INFO - Total Records: 4170
+2026-09-04 09:52:16,827 - INFO - Date Range: 2015-04-05 to 2026-09-03
+2026-09-04 09:52:16,828 - INFO - Buy Signals: 1582
+2026-09-04 09:52:16,828 - INFO - Sell Signals: 1332
+2026-09-04 09:52:16,828 - INFO - Neutral Signals: 1256
+2026-09-04 09:52:16,831 - INFO - Avg Signal Score: 0.11
+2026-09-04 09:52:16,831 - INFO - ============================================================
+2026-09-04 09:52:16,847 - ERROR - ❌ Error: unsupported format string passed to NoneType.__format__
+2026-09-04 09:52:16,851 - INFO - 🔒 Connection closed
+2026-09-04 09:54:20,431 - INFO - ✅ Connected to database
+2026-09-04 09:54:20,432 - INFO - 
+============================================================
+2026-09-04 09:54:20,432 - INFO - 📊 BUILDING BTC DAILY INDICATORS TABLE (PRODUCTION)
+2026-09-04 09:54:20,432 - INFO - ============================================================
+2026-09-04 09:54:20,433 - INFO - 📊 Creating btc_daily_indicators table...
+2026-09-04 09:54:20,442 - INFO - ✅ Table created successfully!
+2026-09-04 09:54:21,018 - WARNING - ⚠️ Missing 4370 dates
+2026-09-04 09:54:21,024 - INFO - ✅ Fetched 4370 validated records
+2026-09-04 09:54:21,024 - INFO - 📊 Calculating indicators vectorized...
+2026-09-04 09:56:07,529 - INFO - ✅ Calculated indicators for 4170 days
+2026-09-04 09:56:10,164 - INFO - 📊 Inserted 500/4170 rows
+2026-09-04 09:56:10,372 - INFO - 📊 Inserted 1000/4170 rows
+2026-09-04 09:56:10,616 - INFO - 📊 Inserted 1500/4170 rows
+2026-09-04 09:56:10,863 - INFO - 📊 Inserted 2000/4170 rows
+2026-09-04 09:56:11,068 - INFO - 📊 Inserted 2500/4170 rows
+2026-09-04 09:56:11,303 - INFO - 📊 Inserted 3000/4170 rows
+2026-09-04 09:56:11,510 - INFO - 📊 Inserted 3500/4170 rows
+2026-09-04 09:56:11,716 - INFO - 📊 Inserted 4000/4170 rows
+2026-09-04 09:56:11,812 - INFO - 📊 Inserted 4170/4170 rows
+2026-09-04 09:56:11,813 - INFO - ✅ Stored 4170 rows successfully
+2026-09-04 09:56:11,839 - INFO - 
+============================================================
+2026-09-04 09:56:11,839 - INFO - 📊 TABLE SUMMARY
+2026-09-04 09:56:11,839 - INFO - ============================================================
+2026-09-04 09:56:11,840 - INFO - Total Records: 4170
+2026-09-04 09:56:11,840 - INFO - Date Range: 2015-04-05 to 2026-09-03
+2026-09-04 09:56:11,841 - INFO - Buy Signals: 1582
+2026-09-04 09:56:11,841 - INFO - Sell Signals: 1332
+2026-09-04 09:56:11,841 - INFO - Neutral Signals: 1256
+2026-09-04 09:56:11,842 - INFO - Avg Signal Score: 0.11
+2026-09-04 09:56:11,842 - INFO - ============================================================
+2026-09-04 09:56:11,866 - INFO - 🔒 Connection closed
+2026-09-04 10:00:19,003 - INFO - ✅ Connected to database
+2026-09-04 10:00:19,003 - INFO - 
+============================================================
+2026-09-04 10:00:19,004 - INFO - 📊 BUILDING BTC DAILY INDICATORS TABLE (PRODUCTION)
+2026-09-04 10:00:19,004 - INFO - ============================================================
+2026-09-04 10:00:19,004 - INFO - 📊 Creating btc_daily_indicators table...
+2026-09-04 10:00:19,162 - INFO - ✅ Table created successfully!
+2026-09-04 10:00:19,748 - WARNING - ⚠️ Missing 4370 dates
+2026-09-04 10:00:19,754 - INFO - ✅ Fetched 4370 validated records
+2026-09-04 10:00:19,754 - INFO - 📊 Calculating indicators vectorized...
+2026-09-04 10:00:56,593 - INFO - 🔒 Connection closed
+2026-09-04 10:03:13,528 - INFO - ✅ Connected to database
+2026-09-04 10:03:13,529 - INFO - 
+============================================================
+2026-09-04 10:03:13,529 - INFO - 📊 BUILDING BTC DAILY INDICATORS TABLE (PRODUCTION)
+2026-09-04 10:03:13,529 - INFO - ============================================================
+2026-09-04 10:03:13,530 - INFO - 📊 Creating btc_daily_indicators table...
+2026-09-04 10:03:13,643 - INFO - ✅ Table created successfully!
+2026-09-04 10:03:14,213 - WARNING - ⚠️ Missing 4370 dates
+2026-09-04 10:03:14,219 - INFO - ✅ Fetched 4370 validated records
+2026-09-04 10:03:14,219 - INFO - 📊 Calculating indicators vectorized...
+2026-09-04 10:05:00,759 - INFO - ✅ Calculated indicators for 4170 days
+2026-09-04 10:05:03,374 - INFO - 📊 Inserted 500/4170 rows
+2026-09-04 10:05:03,783 - INFO - 📊 Inserted 1000/4170 rows
+2026-09-04 10:05:03,979 - INFO - 📊 Inserted 1500/4170 rows
+2026-09-04 10:05:04,206 - INFO - 📊 Inserted 2000/4170 rows
+2026-09-04 10:05:04,380 - INFO - 📊 Inserted 2500/4170 rows
+2026-09-04 10:05:04,563 - INFO - 📊 Inserted 3000/4170 rows
+2026-09-04 10:05:04,745 - INFO - 📊 Inserted 3500/4170 rows
+2026-09-04 10:05:04,912 - INFO - 📊 Inserted 4000/4170 rows
+2026-09-04 10:05:04,985 - INFO - 📊 Inserted 4170/4170 rows
+2026-09-04 10:05:04,985 - INFO - ✅ Stored 4170 rows successfully
+2026-09-04 10:05:05,012 - INFO - 
+============================================================
+2026-09-04 10:05:05,013 - INFO - 📊 TABLE SUMMARY
+2026-09-04 10:05:05,013 - INFO - ============================================================
+2026-09-04 10:05:05,014 - INFO - Total Records: 4170
+2026-09-04 10:05:05,014 - INFO - Date Range: 2015-04-05 to 2026-09-03
+2026-09-04 10:05:05,014 - INFO - Buy Signals: 1582
+2026-09-04 10:05:05,014 - INFO - Sell Signals: 1332
+2026-09-04 10:05:05,015 - INFO - Neutral Signals: 1256
+2026-09-04 10:05:05,015 - INFO - Avg Signal Score: 0.11
+2026-09-04 10:05:05,015 - INFO - ============================================================
+2026-09-04 10:05:05,031 - INFO - 🔒 Connection closed

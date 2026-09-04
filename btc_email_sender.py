@@ -1,5 +1,5 @@
 """
-btc_email_sender.py - Send BTC Indicators Report via Email
+btc_email_sender.py - Send BTC Indicators Report via Email (UPDATED)
 Calls btc_indicators.py as a module and emails the results
 """
 
@@ -78,7 +78,7 @@ class BTCEmailSender:
             return False
     
     def create_html_email(self):
-        """Create HTML email content from results"""
+        """Create HTML email content from results (UPDATED)"""
         if not self.results:
             return None
         
@@ -94,7 +94,7 @@ class BTCEmailSender:
                     padding: 20px;
                 }}
                 .container {{
-                    max-width: 800px;
+                    max-width: 900px;
                     margin: 0 auto;
                     background-color: #ffffff;
                     padding: 30px;
@@ -163,6 +163,18 @@ class BTCEmailSender:
                     color: #856404;
                     border: 2px solid #ffc107;
                 }}
+                .confidence-high {{
+                    color: #28a745;
+                    font-weight: bold;
+                }}
+                .confidence-medium {{
+                    color: #ffc107;
+                    font-weight: bold;
+                }}
+                .confidence-low {{
+                    color: #dc3545;
+                    font-weight: bold;
+                }}
                 table {{
                     width: 100%;
                     border-collapse: collapse;
@@ -208,9 +220,22 @@ class BTCEmailSender:
                     background-color: #ffc107;
                     color: #333;
                 }}
+                .badge-bos {{
+                    background-color: #17a2b8;
+                    color: white;
+                }}
+                .badge-choch {{
+                    background-color: #6f42c1;
+                    color: white;
+                }}
                 .grid-2 {{
                     display: grid;
                     grid-template-columns: 1fr 1fr;
+                    gap: 15px;
+                }}
+                .grid-3 {{
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr;
                     gap: 15px;
                 }}
                 .stat-box {{
@@ -228,6 +253,18 @@ class BTCEmailSender:
                     font-size: 18px;
                     font-weight: bold;
                     color: #333;
+                }}
+                .trend-uptrend {{
+                    color: #28a745;
+                    font-weight: bold;
+                }}
+                .trend-downtrend {{
+                    color: #dc3545;
+                    font-weight: bold;
+                }}
+                .trend-range {{
+                    color: #ffc107;
+                    font-weight: bold;
                 }}
             </style>
         </head>
@@ -247,18 +284,24 @@ class BTCEmailSender:
             </div>
         """
         
-        # Overall Signal
+        # Overall Signal with Confidence
         if 'overall_signal' in self.results:
             signal = self.results['overall_signal']
             direction = signal.get('direction', 'NEUTRAL')
-            score = signal.get('score', 0)
+            score = signal.get('normalized_score', signal.get('score', 0))
+            confidence = signal.get('confidence', 'Unknown')
             
             signal_class = 'signal-buy' if 'BUY' in direction else 'signal-sell' if 'SELL' in direction else 'signal-neutral'
             emoji = '🟢' if 'BUY' in direction else '🔴' if 'SELL' in direction else '🟡'
             
+            # Confidence class
+            conf_class = 'confidence-high' if confidence == 'High' else 'confidence-medium' if confidence == 'Medium' else 'confidence-low'
+            
             html += f"""
                 <div class="signal {signal_class}">
-                    {emoji} {direction} (Score: {score})
+                    {emoji} {direction} (Score: {score:.2f})
+                    <br>
+                    <span style="font-size: 16px;">Confidence: <span class="{conf_class}">{confidence}</span></span>
                 </div>
             """
             
@@ -275,6 +318,103 @@ class BTCEmailSender:
                         </ul>
                     </div>
                 """
+            
+            # Weights
+            if 'weights' in signal:
+                html += """
+                    <div class="section">
+                        <div class="section-title">⚖️ Indicator Weights</div>
+                        <ul>
+                """
+                for key, weight in signal['weights'].items():
+                    html += f"<li>{key}: {weight:.0%}</li>"
+                html += """
+                        </ul>
+                    </div>
+                """
+        
+        # Market Structure (NEW)
+        if 'market_structure' in self.results:
+            structure = self.results['market_structure']
+            html += f"""
+                <div class="section">
+                    <div class="section-title">📊 Market Structure</div>
+                    <div class="grid-2">
+                        <div class="stat-box">
+                            <div class="stat-label">Trend Regime</div>
+                            <div class="stat-value">
+            """
+            
+            trend = structure.get('trend_regime', 'Unknown')
+            if trend == 'Uptrend':
+                html += f'<span class="trend-uptrend">📈 {trend}</span>'
+            elif trend == 'Downtrend':
+                html += f'<span class="trend-downtrend">📉 {trend}</span>'
+            elif trend == 'Range':
+                html += f'<span class="trend-range">➡️ {trend}</span>'
+            else:
+                html += f'❓ {trend}'
+            
+            html += """
+                            </div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">BOS / CHOCH</div>
+                            <div class="stat-value">
+            """
+            
+            bos = structure.get('bos', [])
+            choch = structure.get('choch', [])
+            html += f"{len(bos)} BOS, {len(choch)} CHOCH"
+            
+            html += """
+                            </div>
+                        </div>
+                    </div>
+            """
+            
+            # BOS details
+            if bos:
+                html += """
+                    <table>
+                        <tr><th>Break of Structure (BOS)</th><th>Price</th></tr>
+                """
+                for b in bos:
+                    html += f"""
+                        <tr>
+                            <td><span class="badge badge-bos">{b['type']}</span></td>
+                            <td>${b['price']:,.2f}</td>
+                        </tr>
+                    """
+                html += "</table>"
+            
+            # CHOCH details
+            if choch:
+                html += """
+                    <table>
+                        <tr><th>Change of Character (CHOCH)</th></tr>
+                """
+                for c in choch:
+                    html += f"""
+                        <tr>
+                            <td><span class="badge badge-choch">{c['type']}</span></td>
+                        </tr>
+                    """
+                html += "</table>"
+            
+            # HH/HL/LH/LL
+            if 'hh_hl_lh_ll' in structure:
+                hh_hl = structure['hh_hl_lh_ll']
+                html += f"""
+                    <div style="margin-top: 10px; text-align: center;">
+                        <span style="margin: 0 10px;">HH: {hh_hl.get('HH', 0)}</span>
+                        <span style="margin: 0 10px;">HL: {hh_hl.get('HL', 0)}</span>
+                        <span style="margin: 0 10px;">LH: {hh_hl.get('LH', 0)}</span>
+                        <span style="margin: 0 10px;">LL: {hh_hl.get('LL', 0)}</span>
+                    </div>
+                """
+            
+            html += "</div>"
         
         # Support & Resistance
         if 'support_resistance' in self.results:
@@ -331,21 +471,23 @@ class BTCEmailSender:
                 <div class="section">
                     <div class="section-title">📈 Moving Averages</div>
                     <table>
-                        <tr><th>Period</th><th>Value</th><th>Trend</th></tr>
+                        <tr><th>Period</th><th>Value</th><th>EMA</th><th>Trend</th><th>Slope</th></tr>
             """
             for period, data in ma.items():
-                badge_class = 'badge-bullish' if data.get('trend') == 'Bullish' else 'badge-bearish' if data.get('trend') == 'Bearish' else 'badge-neutral'
+                badge_class = 'badge-bullish' if 'Bullish' in data.get('trend', '') else 'badge-bearish' if 'Bearish' in data.get('trend', '') else 'badge-neutral'
                 html += f"""
                     <tr>
                         <td>{period}</td>
                         <td>${data['value']:,.2f}</td>
+                        <td>${data.get('ema', data['value']):,.2f}</td>
                         <td><span class="badge {badge_class}">{data['trend']}</span></td>
+                        <td>{data.get('slope', 0):.2f}%</td>
                     </tr>
                 """
             html += "</table></div>"
         
         # RSI, MACD, ATR Grid
-        html += '<div class="grid-2">'
+        html += '<div class="grid-3">'
         
         if 'rsi' in self.results:
             rsi = self.results['rsi']
@@ -371,26 +513,24 @@ class BTCEmailSender:
                 </div>
             """
         
-        html += '</div>'
-        
-        # ATR
         if 'atr' in self.results:
             atr = self.results['atr']
             html += f"""
                 <div class="section">
-                    <div class="section-title">📊 Volatility (ATR)</div>
-                    <div class="grid-2">
-                        <div class="stat-box">
-                            <div class="stat-label">ATR Value</div>
-                            <div class="stat-value">${atr.get('atr', 0):,.2f}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Status</div>
-                            <div class="stat-value">{atr.get('volatility_status', 'Normal')}</div>
-                        </div>
-                    </div>
-                </div>
+                    <div class="section-title">📊 ATR</div>
+                    <div style="text-align:center; font-size:20px; font-weight:bold;">${atr.get('atr', 0):.2f}</div>
+                    <div style="font-size:12px; color:#666; text-align:center;">{atr.get('percentile', 0):.0f}th percentile</div>
             """
+            if 'overall_signal' in self.results and 'atr_info' in self.results['overall_signal']:
+                atr_info = self.results['overall_signal']['atr_info']
+                html += f"""
+                    <div style="font-size:11px; color:#666; text-align:center; margin-top:5px;">
+                        Stop Loss: ${atr_info.get('suggested_stop_loss', 0):.2f}
+                    </div>
+                """
+            html += "</div>"
+        
+        html += '</div>'
         
         # Bollinger Bands
         if 'bollinger_bands' in self.results:
@@ -398,7 +538,7 @@ class BTCEmailSender:
             html += f"""
                 <div class="section">
                     <div class="section-title">📊 Bollinger Bands</div>
-                    <div class="grid-2">
+                    <div class="grid-3">
                         <div class="stat-box">
                             <div class="stat-label">Upper Band</div>
                             <div class="stat-value">${bb.get('upper_band', 0):,.2f}</div>
@@ -411,21 +551,25 @@ class BTCEmailSender:
                             <div class="stat-label">Lower Band</div>
                             <div class="stat-value">${bb.get('lower_band', 0):,.2f}</div>
                         </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Squeeze</div>
-                            <div class="stat-value">{bb.get('squeeze', 'No')}</div>
-                        </div>
                     </div>
-                    <div style="text-align:center; margin-top:10px; font-size:14px;">Position: {bb.get('position', 'Inside Bands')}</div>
+                    <div style="text-align:center; margin-top:10px; font-size:14px;">
+                        Position: {bb.get('position', 'Inside Bands')} | 
+                        Squeeze: {bb.get('squeeze', 'No')} | 
+                        Percentile: {bb.get('bandwidth_percentile', 0):.0f}%
+                    </div>
                 </div>
             """
         
-        # Fibonacci
+        # Fibonacci (Swing-based)
         if 'fibonacci' in self.results:
             fib = self.results['fibonacci']
             html += f"""
                 <div class="section">
-                    <div class="section-title">📊 Fibonacci Levels</div>
+                    <div class="section-title">📊 Fibonacci (Swing-based)</div>
+                    <div style="font-size:14px; text-align:center; margin-bottom:10px;">
+                        Swing High: ${fib.get('swing_high', 0):,.2f} ({fib.get('high_date', 'N/A')}) | 
+                        Swing Low: ${fib.get('swing_low', 0):,.2f} ({fib.get('low_date', 'N/A')})
+                    </div>
                     <table>
                         <tr><th>Level</th><th>Price</th></tr>
             """
@@ -438,7 +582,7 @@ class BTCEmailSender:
                 """
             html += "</table>"
             if fib.get('current_fib_level'):
-                html += f"<div style='margin-top:10px;'>Current Level: <strong>{fib['current_fib_level']}</strong></div>"
+                html += f"<div style='margin-top:10px;'>📍 Current Level: <strong>{fib['current_fib_level']}</strong></div>"
             html += "</div>"
         
         # Pivot Points
@@ -456,24 +600,37 @@ class BTCEmailSender:
                             <div class="stat-label">Position</div>
                             <div class="stat-value">{pivot.get('current_position', 'Below Pivot')}</div>
                         </div>
-                        <div class="stat-box">
-                            <div class="stat-label">R1 / S1</div>
-                            <div class="stat-value">${pivot.get('resistance_1', 0):,.2f} / ${pivot.get('support_1', 0):,.2f}</div>
+                    </div>
+                    <div class="grid-2">
+                        <div>
+                            <div class="stat-box">
+                                <div class="stat-label">R1 / R2 / R3</div>
+                                <div class="stat-value">
+                                    ${pivot.get('resistance_1', 0):,.2f} / ${pivot.get('resistance_2', 0):,.2f} / ${pivot.get('resistance_3', 0):,.2f}
+                                </div>
+                            </div>
                         </div>
-                        <div class="stat-box">
-                            <div class="stat-label">R2 / S2</div>
-                            <div class="stat-value">${pivot.get('resistance_2', 0):,.2f} / ${pivot.get('support_2', 0):,.2f}</div>
+                        <div>
+                            <div class="stat-box">
+                                <div class="stat-label">S1 / S2 / S3</div>
+                                <div class="stat-value">
+                                    ${pivot.get('support_1', 0):,.2f} / ${pivot.get('support_2', 0):,.2f} / ${pivot.get('support_3', 0):,.2f}
+                                </div>
+                            </div>
                         </div>
+                    </div>
+                    <div style="text-align:center; margin-top:10px; font-size:14px;">
+                        Nearest: {pivot.get('nearest_level', 'N/A')} (${pivot.get('distance_to_nearest', 0):.2f} away)
                     </div>
                 </div>
             """
         
-        # Liquidity
+        # Liquidity with Volume Profile
         if 'liquidity' in self.results:
             liq = self.results['liquidity']
             html += f"""
                 <div class="section">
-                    <div class="section-title">💧 Liquidity</div>
+                    <div class="section-title">💧 Liquidity Analysis</div>
                     <div class="grid-2">
                         <div class="stat-box">
                             <div class="stat-label">30-Day Avg Volume</div>
@@ -485,10 +642,33 @@ class BTCEmailSender:
                         </div>
                     </div>
             """
+            
+            # Volume Profile
+            if 'volume_profile' in liq:
+                vp = liq['volume_profile']
+                if vp:
+                    html += """
+                        <div class="grid-3">
+                            <div class="stat-box">
+                                <div class="stat-label">POC</div>
+                                <div class="stat-value">$""" + f"{vp.get('poc', 0):,.2f}</div></div>"
+                    html += f"""
+                            <div class="stat-box">
+                                <div class="stat-label">VAH</div>
+                                <div class="stat-value">${vp.get('vah', 0):,.2f}</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">VAL</div>
+                                <div class="stat-value">${vp.get('val', 0):,.2f}</div>
+                            </div>
+                        </div>
+                    """
+            
+            # High Volume Nodes
             if 'high_volume_nodes' in liq and liq['high_volume_nodes']:
                 html += """
                     <table>
-                        <tr><th>High Volume Nodes</th><th>Volume</th></tr>
+                        <tr><th>High Volume Nodes (HVN)</th><th>Volume</th></tr>
                 """
                 for node in liq['high_volume_nodes'][:3]:
                     html += f"""
@@ -498,12 +678,14 @@ class BTCEmailSender:
                         </tr>
                     """
                 html += "</table>"
+            
             html += "</div>"
         
         # Footer
         html += """
                 <div class="footer">
-                    <p>Generated by BTC Indicators System</p>
+                    <p>Generated by BTC Indicators System (Improved)</p>
+                    <p>Indicators: S/R, Market Structure, MA, RSI, MACD, BB, Fibonacci, Pivot, Liquidity, ATR</p>
                     <p>© 2026 All Rights Reserved</p>
                 </div>
             </div>
@@ -524,10 +706,15 @@ class BTCEmailSender:
             
             # Add plain text version
             text_content = f"""
-BTC Daily Report
+BTC Daily Report (Improved)
 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 Current Price: ${self.results.get('current_price', 0):,.2f}
+
+Signal: {self.results.get('overall_signal', {}).get('direction', 'NEUTRAL')}
+Confidence: {self.results.get('overall_signal', {}).get('confidence', 'Unknown')}
+
+Market Structure: {self.results.get('market_structure', {}).get('trend_regime', 'Unknown')}
 
 Please view this email in HTML format for the complete report with all indicators.
             """
@@ -557,7 +744,7 @@ Please view this email in HTML format for the complete report with all indicator
     def send_report(self):
         """Main function to get indicators and send report"""
         logger.info("\n" + "="*60)
-        logger.info("📧 SENDING BTC INDICATORS REPORT")
+        logger.info("📧 SENDING BTC INDICATORS REPORT (IMPROVED)")
         logger.info("="*60)
         
         # Get indicators from btc_indicators.py
