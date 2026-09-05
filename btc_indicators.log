@@ -1898,3 +1898,157 @@ KeyError: 'close_price'
 2026-09-05 23:11:20,918 | INFO | ✅ Email sent successfully!
 2026-09-05 23:11:20,920 | INFO | 🗑️ Cleaned up PDF: btc_dashboard_full_report_20260905_231116.pdf
 2026-09-05 23:11:20,923 | INFO | ✅ Report sent successfully!
+2026-09-06 00:01:30,452 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:01:30,455 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:01:30,455 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:01:30,456 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:01:30,456 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-06 00:01:30,769 | INFO | ✅ Connected to database
+2026-09-06 00:01:30,770 | INFO | 
+============================================================
+2026-09-06 00:01:30,770 | INFO | 📊 CALCULATING BTC INDICATORS (IMPROVED)
+2026-09-06 00:01:30,771 | INFO | ============================================================
+2026-09-06 00:01:30,892 | INFO | ✅ Fetched 365 records
+2026-09-06 00:01:30,893 | INFO | 🔍 Calculating Support & Resistance...
+2026-09-06 00:01:30,918 | INFO | 💧 Calculating Volume-based Liquidity Proxy...
+2026-09-06 00:01:30,978 | INFO | 📈 Calculating Moving Averages...
+2026-09-06 00:01:30,990 | INFO | 📊 Calculating RSI...
+2026-09-06 00:01:30,999 | INFO | 📊 Calculating MACD...
+2026-09-06 00:01:31,001 | INFO | 📊 Calculating Bollinger Bands...
+2026-09-06 00:01:31,019 | INFO | 📊 Calculating ATR...
+2026-09-06 00:01:31,026 | INFO | 📊 Calculating Fibonacci...
+2026-09-06 00:01:31,034 | INFO | 📊 Calculating Pivot Points...
+2026-09-06 00:01:31,034 | INFO | 📊 Calculating Market Structure...
+2026-09-06 00:01:31,048 | INFO | 🎯 Generating Overall Signal...
+2026-09-06 00:01:31,048 | INFO | ✅ All indicators calculated successfully!
+2026-09-06 00:01:31,053 | INFO | 🔒 Connection closed
+2026-09-06 00:08:21,044 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:08:21,045 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:08:21,045 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:08:21,046 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:08:21,046 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-06 00:08:21,055 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:08:21,055 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:08:21,056 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:08:21,057 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:08:21,059 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-06 00:08:21,064 | INFO | Database configuration loaded: user=root, host=localhost, database=bitcoin_db
+2026-09-06 00:08:21,071 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:08:21,071 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:08:21,072 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:08:21,073 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:08:21,074 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-06 00:08:21,157 | INFO | ✅ Connected to database
+2026-09-06 00:08:21,162 | INFO | 
+============================================================
+2026-09-06 00:08:21,163 | INFO | 📊 CALCULATING BTC INDICATORS (IMPROVED)
+2026-09-06 00:08:21,163 | INFO | ============================================================
+2026-09-06 00:08:21,230 | INFO | ✅ Fetched 365 records
+2026-09-06 00:08:21,231 | INFO | 🔍 Calculating Support & Resistance...
+2026-09-06 00:08:21,246 | INFO | 💧 Calculating Volume-based Liquidity Proxy...
+2026-09-06 00:08:21,259 | INFO | 📈 Calculating Moving Averages...
+2026-09-06 00:08:21,263 | INFO | 📊 Calculating RSI...
+2026-09-06 00:08:21,267 | INFO | 📊 Calculating MACD...
+2026-09-06 00:08:21,270 | INFO | 📊 Calculating Bollinger Bands...
+2026-09-06 00:08:21,273 | INFO | 📊 Calculating ATR...
+2026-09-06 00:08:21,278 | INFO | 📊 Calculating Fibonacci...
+2026-09-06 00:08:21,285 | INFO | 📊 Calculating Pivot Points...
+2026-09-06 00:08:21,287 | INFO | 📊 Calculating Market Structure...
+2026-09-06 00:08:21,298 | INFO | 🎯 Generating Overall Signal...
+2026-09-06 00:08:21,299 | INFO | ✅ All indicators calculated successfully!
+2026-09-06 00:08:21,302 | INFO | 🔒 Connection closed
+2026-09-06 00:09:04,586 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:09:04,609 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:09:04,614 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:09:04,616 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:09:04,617 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-06 00:09:21,803 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:09:21,804 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:09:21,804 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:09:21,804 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:09:21,805 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-06 00:11:28,832 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:11:28,856 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:11:28,884 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:11:28,922 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:11:28,927 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-06 00:11:28,979 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:11:28,979 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:11:28,979 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:11:28,980 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:11:28,980 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-06 00:11:28,981 | INFO | Database configuration loaded: user=root, host=localhost, database=bitcoin_db
+2026-09-06 00:11:28,985 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:11:28,985 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:11:28,985 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:11:28,986 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:11:28,986 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-06 00:11:29,016 | INFO | ✅ Connected to database
+2026-09-06 00:11:29,017 | INFO | 
+============================================================
+2026-09-06 00:11:29,017 | INFO | 📊 CALCULATING BTC INDICATORS (IMPROVED)
+2026-09-06 00:11:29,017 | INFO | ============================================================
+2026-09-06 00:11:29,042 | INFO | ✅ Fetched 365 records
+2026-09-06 00:11:29,042 | INFO | 🔍 Calculating Support & Resistance...
+2026-09-06 00:11:29,051 | INFO | 💧 Calculating Volume-based Liquidity Proxy...
+2026-09-06 00:11:29,062 | INFO | 📈 Calculating Moving Averages...
+2026-09-06 00:11:29,074 | INFO | 📊 Calculating RSI...
+2026-09-06 00:11:29,079 | INFO | 📊 Calculating MACD...
+2026-09-06 00:11:29,083 | INFO | 📊 Calculating Bollinger Bands...
+2026-09-06 00:11:29,085 | INFO | 📊 Calculating ATR...
+2026-09-06 00:11:29,090 | INFO | 📊 Calculating Fibonacci...
+2026-09-06 00:11:29,100 | INFO | 📊 Calculating Pivot Points...
+2026-09-06 00:11:29,102 | INFO | 📊 Calculating Market Structure...
+2026-09-06 00:11:29,109 | INFO | 🎯 Generating Overall Signal...
+2026-09-06 00:11:29,110 | INFO | ✅ All indicators calculated successfully!
+2026-09-06 00:11:29,112 | INFO | 🔒 Connection closed
+2026-09-06 00:20:25,306 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:20:25,311 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:20:25,311 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:20:25,312 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:20:25,312 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-06 00:20:25,325 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:20:25,326 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:20:25,326 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:20:25,326 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:20:25,326 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-06 00:20:25,327 | INFO | Database configuration loaded: user=root, host=localhost, database=bitcoin_db
+2026-09-06 00:20:25,336 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:20:25,356 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:20:25,356 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:20:25,357 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:20:25,357 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-06 00:25:07,768 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:25:07,768 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:25:07,769 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:25:07,769 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:25:07,769 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-06 00:25:07,840 | INFO | ✅ Connected to database
+2026-09-06 00:25:07,842 | INFO | 
+============================================================
+2026-09-06 00:25:07,845 | INFO | 📊 CALCULATING BTC INDICATORS (IMPROVED)
+2026-09-06 00:25:07,846 | INFO | ============================================================
+2026-09-06 00:25:07,875 | INFO | ✅ Fetched 365 records
+2026-09-06 00:25:07,876 | INFO | 🔍 Calculating Support & Resistance...
+2026-09-06 00:25:07,889 | INFO | 💧 Calculating Volume-based Liquidity Proxy...
+2026-09-06 00:25:07,918 | INFO | 📈 Calculating Moving Averages...
+2026-09-06 00:25:07,933 | INFO | 📊 Calculating RSI...
+2026-09-06 00:25:07,944 | INFO | 📊 Calculating MACD...
+2026-09-06 00:25:07,995 | INFO | 📊 Calculating Bollinger Bands...
+2026-09-06 00:25:08,021 | INFO | 📊 Calculating ATR...
+2026-09-06 00:25:08,055 | INFO | 📊 Calculating Fibonacci...
+2026-09-06 00:25:08,090 | INFO | 📊 Calculating Pivot Points...
+2026-09-06 00:25:08,105 | INFO | 📊 Calculating Market Structure...
+2026-09-06 00:25:08,128 | INFO | 🎯 Generating Overall Signal...
+2026-09-06 00:25:08,133 | INFO | ✅ All indicators calculated successfully!
+2026-09-06 00:25:08,137 | INFO | 🔒 Connection closed
+2026-09-06 00:25:56,360 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:25:56,361 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:25:56,362 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:25:56,364 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:25:56,366 | WARNING | python-dotenv could not parse statement starting at line 18
+2026-09-06 00:26:05,587 | WARNING | python-dotenv could not parse statement starting at line 14
+2026-09-06 00:26:05,587 | WARNING | python-dotenv could not parse statement starting at line 15
+2026-09-06 00:26:05,588 | WARNING | python-dotenv could not parse statement starting at line 16
+2026-09-06 00:26:05,589 | WARNING | python-dotenv could not parse statement starting at line 17
+2026-09-06 00:26:05,589 | WARNING | python-dotenv could not parse statement starting at line 18

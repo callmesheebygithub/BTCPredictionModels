@@ -1,3 +1,32 @@
+"""
+train_btc_models.py
+
+Train:
+    LSTM
+    GRU
+
+Data source:
+    btc_ml_features
+
+Important:
+    Rows with NULL target_return are NOT used for training.
+
+Example:
+
+    Sep 3:
+        Features available
+        target_return = Sep 4 return
+        → TRAINING
+
+    Sep 4:
+        Features available
+        target_return = NULL
+        → NOT TRAINING
+
+    Sep 4 will be used later by daily_prediction.py
+    to predict Sep 5.
+"""
+
 import os
 import mysql.connector
 import numpy as np
@@ -5,11 +34,22 @@ import pandas as pd
 import joblib
 
 from dotenv import load_dotenv
+
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error
+)
 
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Input, LSTM, GRU, Dense, Dropout
+from tensorflow.keras.layers import (
+    Input,
+    LSTM,
+    GRU,
+    Dense,
+    Dropout
+)
+
 from tensorflow.keras.callbacks import EarlyStopping
 
 
@@ -28,7 +68,10 @@ DB_CONFIG = {
 
 MODEL_DIR = "models"
 
-os.makedirs(MODEL_DIR, exist_ok=True)
+os.makedirs(
+    MODEL_DIR,
+    exist_ok=True
+)
 
 SEQUENCE_LENGTH = 30
 
@@ -45,9 +88,13 @@ BATCH_SIZE = 32
 
 def load_data():
 
-    print("\nConnecting to MySQL...")
+    print(
+        "\nConnecting to MySQL..."
+    )
 
-    conn = mysql.connector.connect(**DB_CONFIG)
+    conn = mysql.connector.connect(
+        **DB_CONFIG
+    )
 
     query = """
         SELECT *
@@ -55,7 +102,10 @@ def load_data():
         ORDER BY date ASC
     """
 
-    df = pd.read_sql(query, conn)
+    df = pd.read_sql(
+        query,
+        conn
+    )
 
     conn.close()
 
@@ -66,16 +116,26 @@ def load_data():
 # CREATE SEQUENCES
 # ============================================================
 
-def create_sequences(X, y, dates, sequence_length):
+def create_sequences(
+    X,
+    y,
+    dates,
+    sequence_length
+):
 
     X_sequences = []
     y_sequences = []
     sequence_dates = []
 
-    for i in range(sequence_length, len(X)):
+    for i in range(
+        sequence_length,
+        len(X)
+    ):
 
         X_sequences.append(
-            X[i - sequence_length:i]
+            X[
+                i - sequence_length:i
+            ]
         )
 
         y_sequences.append(
@@ -97,7 +157,10 @@ def create_sequences(X, y, dates, sequence_length):
 # METRICS
 # ============================================================
 
-def calculate_metrics(y_true, y_pred):
+def calculate_metrics(
+    y_true,
+    y_pred
+):
 
     mae = mean_absolute_error(
         y_true,
@@ -111,7 +174,6 @@ def calculate_metrics(y_true, y_pred):
         )
     )
 
-    # Directional accuracy
     actual_direction = (
         y_true > 0
     ).astype(int)
@@ -121,17 +183,25 @@ def calculate_metrics(y_true, y_pred):
     ).astype(int)
 
     directional_accuracy = (
-        actual_direction == predicted_direction
+        actual_direction
+        ==
+        predicted_direction
     ).mean() * 100
 
-    return mae, rmse, directional_accuracy
+    return (
+        mae,
+        rmse,
+        directional_accuracy
+    )
 
 
 # ============================================================
-# BUILD LSTM MODEL
+# BUILD LSTM
 # ============================================================
 
-def build_lstm(input_shape):
+def build_lstm(
+    input_shape
+):
 
     model = Sequential([
 
@@ -144,13 +214,17 @@ def build_lstm(input_shape):
             return_sequences=True
         ),
 
-        Dropout(0.2),
+        Dropout(
+            0.2
+        ),
 
         LSTM(
             32
         ),
 
-        Dropout(0.2),
+        Dropout(
+            0.2
+        ),
 
         Dense(
             16,
@@ -171,10 +245,12 @@ def build_lstm(input_shape):
 
 
 # ============================================================
-# BUILD GRU MODEL
+# BUILD GRU
 # ============================================================
 
-def build_gru(input_shape):
+def build_gru(
+    input_shape
+):
 
     model = Sequential([
 
@@ -187,13 +263,17 @@ def build_gru(input_shape):
             return_sequences=True
         ),
 
-        Dropout(0.2),
+        Dropout(
+            0.2
+        ),
 
         GRU(
             32
         ),
 
-        Dropout(0.2),
+        Dropout(
+            0.2
+        ),
 
         Dense(
             16,
@@ -220,16 +300,19 @@ def build_gru(input_shape):
 def main():
 
     print("\n")
-    print("============================================================")
-    print("        BTC LSTM & GRU TRAINING")
-    print("============================================================")
-
+    print("=" * 60)
+    print(
+        "        BTC LSTM & GRU TRAINING"
+    )
+    print("=" * 60)
 
     # ========================================================
     # LOAD DATA
     # ========================================================
 
-    print("\nLoading data...")
+    print(
+        "\nLoading data..."
+    )
 
     df = load_data()
 
@@ -243,16 +326,27 @@ def main():
         f"Total rows loaded: {len(df)}"
     )
 
-
-    # ========================================================
-    # CLEAN DATA
-    # ========================================================
-
     df["date"] = pd.to_datetime(
         df["date"]
     )
 
-    # Features that must NOT be used as X
+    df = df.sort_values(
+        "date"
+    ).reset_index(
+        drop=True
+    )
+
+    print(
+        f"Date range: "
+        f"{df['date'].min().date()} "
+        f"→ "
+        f"{df['date'].max().date()}"
+    )
+
+    # ========================================================
+    # FEATURES
+    # ========================================================
+
     excluded = [
         "date",
         "target_return",
@@ -266,47 +360,38 @@ def main():
     ]
 
     print(
-        f"Number of features: {len(features)}"
+        f"\nNumber of features: "
+        f"{len(features)}"
     )
 
-    print("\nFeatures:")
-
-    for i, feature in enumerate(features, 1):
-
-        print(
-            f"{i:02d}. {feature}"
-        )
-
-
     # ========================================================
-    # KEEP ONLY ROWS WITH VALID TARGET
+    # TRAINING DATA
     # ========================================================
 
-    # For training we need an actual target_return.
-    #
-    # The latest candle may have NULL target_return because
-    # tomorrow's close is not available yet.
-    #
-    # Therefore:
-    # - Training uses rows with known target_return.
-    # - We do NOT delete the latest candle from the database.
-    # - daily_prediction.py can separately use the latest row.
+    training_df = df[
+        df["target_return"].notna()
+    ].copy()
 
-    training_df = df.dropna(
-        subset=["target_return"]
-    ).copy()
+    print(
+        f"\nRows with known target: "
+        f"{len(training_df)}"
+    )
 
-    if len(training_df) < SEQUENCE_LENGTH + 100:
+    if len(training_df) == 0:
 
         raise ValueError(
-            f"Not enough training data. "
-            f"Required at least {SEQUENCE_LENGTH + 100} rows, "
-            f"but only {len(training_df)} rows are available."
+            "No rows with known target_return."
         )
 
+    print(
+        f"Training target range: "
+        f"{training_df['date'].min().date()} "
+        f"→ "
+        f"{training_df['date'].max().date()}"
+    )
 
     # ========================================================
-    # HANDLE FEATURES
+    # PREPARE X/Y
     # ========================================================
 
     X_df = training_df[
@@ -315,98 +400,129 @@ def main():
 
     y = training_df[
         "target_return"
-    ].values.astype(np.float32)
+    ].values.astype(
+        np.float32
+    )
 
     dates = training_df[
         "date"
-    ]
+    ].reset_index(
+        drop=True
+    )
 
+    # ========================================================
+    # CLEAN FEATURES
+    # ========================================================
 
-    # Replace infinite values
     X_df = X_df.replace(
         [np.inf, -np.inf],
         np.nan
     )
 
-    # Forward fill / backward fill indicators
-    X_df = X_df.ffill().bfill()
+    # At this point feature preparation should already
+    # have removed insufficient-history rows.
 
-    # Final safety check
     if X_df.isna().any().any():
 
         print(
-            "\nWARNING: NaN values still exist."
+            "\n⚠️ Missing feature values detected."
         )
 
-        X_df = X_df.fillna(0)
+        print(
+            X_df.isna().sum()[
+                X_df.isna().sum() > 0
+            ]
+        )
 
+        X_df = X_df.ffill().bfill()
+
+    if X_df.isna().any().any():
+
+        X_df = X_df.fillna(0)
 
     X = X_df.values.astype(
         np.float32
     )
 
-
     # ========================================================
-    # CHRONOLOGICAL TRAIN / TEST SPLIT
+    # CHRONOLOGICAL SPLIT
     # ========================================================
 
     split_index = int(
-        len(X) * TRAIN_RATIO
+        len(X)
+        * TRAIN_RATIO
     )
 
-    print("\n============================================================")
-    print("CHRONOLOGICAL SPLIT")
-    print("============================================================")
+    if split_index <= SEQUENCE_LENGTH:
+
+        raise ValueError(
+            "Training portion is too small "
+            "for sequence generation."
+        )
+
+    if split_index >= len(X):
+
+        raise ValueError(
+            "Test set is empty."
+        )
+
+    print("\n")
+    print("=" * 60)
+    print(
+        "CHRONOLOGICAL SPLIT"
+    )
+    print("=" * 60)
 
     print(
         f"Train rows: {split_index}"
     )
 
     print(
-        f"Test rows:  {len(X) - split_index}"
+        f"Test rows: "
+        f"{len(X) - split_index}"
     )
 
     print(
         f"Train period: "
-        f"{training_df['date'].iloc[0].date()} "
+        f"{dates.iloc[0].date()} "
         f"→ "
-        f"{training_df['date'].iloc[split_index - 1].date()}"
+        f"{dates.iloc[split_index - 1].date()}"
     )
 
     print(
-        f"Test period:  "
-        f"{training_df['date'].iloc[split_index].date()} "
+        f"Test period: "
+        f"{dates.iloc[split_index].date()} "
         f"→ "
-        f"{training_df['date'].iloc[-1].date()}"
+        f"{dates.iloc[-1].date()}"
     )
 
-
     # ========================================================
-    # SCALE WITHOUT DATA LEAKAGE
+    # SCALE
     # ========================================================
 
-    print("\nScaling data...")
+    print(
+        "\nScaling data..."
+    )
 
     scaler = StandardScaler()
 
-    # IMPORTANT:
-    # Fit ONLY on training data
     scaler.fit(
         X[:split_index]
     )
 
-    # Transform entire dataset using
-    # training-fitted scaler
     X_scaled = scaler.transform(
         X
-    ).astype(np.float32)
-
+    ).astype(
+        np.float32
+    )
 
     # ========================================================
-    # CREATE SEQUENCES
+    # SEQUENCES
     # ========================================================
 
-    print("\nCreating sequences...")
+    print(
+        "\nCreating sequences..."
+    )
 
     X_seq, y_seq, sequence_dates = create_sequences(
         X_scaled,
@@ -416,26 +532,25 @@ def main():
     )
 
     print(
-        f"Sequence shape: {X_seq.shape}"
+        f"Sequence shape: "
+        f"{X_seq.shape}"
     )
 
     print(
-        f"Target shape:   {y_seq.shape}"
+        f"Target shape: "
+        f"{y_seq.shape}"
     )
 
-
     # ========================================================
-    # FIND SEQUENCE TRAIN/TEST SPLIT
+    # SEQUENCE TRAIN / TEST SPLIT
     # ========================================================
 
-    # Sequence target at index i corresponds to
-    # original row i.
-    #
-    # Therefore the original chronological split index
-    # can be used to divide sequences.
+    split_date = dates.iloc[
+        split_index
+    ]
 
     train_sequence_count = sum(
-        date < training_df["date"].iloc[split_index]
+        date < split_date
         for date in sequence_dates
     )
 
@@ -455,32 +570,34 @@ def main():
         train_sequence_count:
     ]
 
-
-    print("\n============================================================")
-    print("SEQUENCE SPLIT")
-    print("============================================================")
+    print("\n")
+    print("=" * 60)
+    print(
+        "SEQUENCE SPLIT"
+    )
+    print("=" * 60)
 
     print(
-        f"Training sequences: {len(X_train)}"
+        f"Training sequences: "
+        f"{len(X_train)}"
     )
 
     print(
-        f"Testing sequences:  {len(X_test)}"
+        f"Testing sequences: "
+        f"{len(X_test)}"
     )
-
 
     if len(X_train) == 0:
 
         raise ValueError(
-            "No training sequences were created."
+            "No training sequences."
         )
 
     if len(X_test) == 0:
 
         raise ValueError(
-            "No test sequences were created."
+            "No testing sequences."
         )
-
 
     # ========================================================
     # SAVE SCALER
@@ -501,9 +618,9 @@ def main():
     )
 
     print(
-        f"\nScaler saved: {scaler_path}"
+        f"\nScaler saved: "
+        f"{scaler_path}"
     )
-
 
     # ========================================================
     # EARLY STOPPING
@@ -518,15 +635,16 @@ def main():
         restore_best_weights=True
     )
 
-
     # ========================================================
     # LSTM
     # ========================================================
 
     print("\n")
-    print("============================================================")
-    print("TRAINING LSTM")
-    print("============================================================")
+    print("=" * 60)
+    print(
+        "TRAINING LSTM"
+    )
+    print("=" * 60)
 
     lstm_model = build_lstm(
         (
@@ -534,9 +652,6 @@ def main():
             X_train.shape[2]
         )
     )
-
-    lstm_model.summary()
-
 
     lstm_history = lstm_model.fit(
 
@@ -559,19 +674,24 @@ def main():
         verbose=1
     )
 
-
     # ========================================================
-    # LSTM TEST PREDICTION
+    # LSTM EVALUATION
     # ========================================================
 
-    print("\nEvaluating LSTM...")
+    print(
+        "\nEvaluating LSTM..."
+    )
 
     lstm_pred = lstm_model.predict(
         X_test,
         verbose=0
     ).flatten()
 
-    lstm_mae, lstm_rmse, lstm_directional_accuracy = calculate_metrics(
+    (
+        lstm_mae,
+        lstm_rmse,
+        lstm_directional_accuracy
+    ) = calculate_metrics(
         y_test,
         lstm_pred
     )
@@ -591,7 +711,6 @@ def main():
         f"{lstm_directional_accuracy:.2f}%"
     )
 
-
     # ========================================================
     # SAVE LSTM
     # ========================================================
@@ -606,18 +725,20 @@ def main():
     )
 
     print(
-        f"LSTM saved: {lstm_path}"
+        f"LSTM saved: "
+        f"{lstm_path}"
     )
-
 
     # ========================================================
     # GRU
     # ========================================================
 
     print("\n")
-    print("============================================================")
-    print("TRAINING GRU")
-    print("============================================================")
+    print("=" * 60)
+    print(
+        "TRAINING GRU"
+    )
+    print("=" * 60)
 
     gru_model = build_gru(
         (
@@ -626,8 +747,17 @@ def main():
         )
     )
 
-    gru_model.summary()
+    # New EarlyStopping object because the previous callback
+    # has already been used by LSTM.
 
+    gru_early_stop = EarlyStopping(
+
+        monitor="val_loss",
+
+        patience=10,
+
+        restore_best_weights=True
+    )
 
     gru_history = gru_model.fit(
 
@@ -642,7 +772,7 @@ def main():
         batch_size=BATCH_SIZE,
 
         callbacks=[
-            early_stop
+            gru_early_stop
         ],
 
         shuffle=False,
@@ -650,19 +780,24 @@ def main():
         verbose=1
     )
 
-
     # ========================================================
-    # GRU TEST PREDICTION
+    # GRU EVALUATION
     # ========================================================
 
-    print("\nEvaluating GRU...")
+    print(
+        "\nEvaluating GRU..."
+    )
 
     gru_pred = gru_model.predict(
         X_test,
         verbose=0
     ).flatten()
 
-    gru_mae, gru_rmse, gru_directional_accuracy = calculate_metrics(
+    (
+        gru_mae,
+        gru_rmse,
+        gru_directional_accuracy
+    ) = calculate_metrics(
         y_test,
         gru_pred
     )
@@ -682,7 +817,6 @@ def main():
         f"{gru_directional_accuracy:.2f}%"
     )
 
-
     # ========================================================
     # SAVE GRU
     # ========================================================
@@ -697,24 +831,26 @@ def main():
     )
 
     print(
-        f"GRU saved: {gru_path}"
+        f"GRU saved: "
+        f"{gru_path}"
     )
-
 
     # ========================================================
     # FINAL RESULTS
     # ========================================================
 
     print("\n")
-    print("============================================================")
-    print("          DEEP LEARNING RESULTS")
-    print("============================================================")
+    print("=" * 60)
+    print(
+        "          DEEP LEARNING RESULTS"
+    )
+    print("=" * 60)
 
     print(
         f"{'Model':<10}"
         f"{'MAE':<18}"
         f"{'RMSE':<18}"
-        f"{'Direction Accuracy'}"
+        f"Direction Accuracy"
     )
 
     print(
@@ -732,12 +868,15 @@ def main():
     )
 
     print("\n")
-    print("============================================================")
-    print("LSTM & GRU TRAINING COMPLETE")
-    print("============================================================")
+    print("=" * 60)
+    print(
+        "LSTM & GRU TRAINING COMPLETE"
+    )
+    print("=" * 60)
 
     print(
-        f"\nModels saved in: {MODEL_DIR}"
+        f"\nModels saved in: "
+        f"{MODEL_DIR}"
     )
 
     print(
@@ -758,7 +897,7 @@ def main():
 
 
 # ============================================================
-# ENTRY POINT
+# RUN
 # ============================================================
 
 if __name__ == "__main__":

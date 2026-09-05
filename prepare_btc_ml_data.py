@@ -5,19 +5,30 @@ Purpose:
     Read BTC daily OHLCV data from:
         btc_price_history
 
-    Create ML-ready features in a separate table:
+    Create ML-ready features in:
         btc_ml_features
 
-    Original btc_price_history table is NEVER modified.
+Important:
+    btc_price_history is NEVER modified.
 
 Target:
     target_return = next day's percentage return
 
 Example:
-    Today's close = 100,000
-    Tomorrow's close = 102,000
+    Sep 3 close = 100,000
+    Sep 4 close = 102,000
 
-    target_return = 0.02  (+2%)
+    Sep 3 target_return = 0.02
+
+Latest candle:
+    If Sep 4 is the latest available candle and Sep 5
+    does not exist yet:
+
+        Sep 4 target_return = NULL
+        Sep 4 target_direction = NULL
+
+    Sep 4 is STILL kept because its features are required
+    to predict Sep 5.
 """
 
 import mysql.connector
@@ -66,7 +77,6 @@ logger = logging.getLogger(__name__)
 # ============================================================
 
 def get_connection():
-    """Create MySQL connection."""
 
     try:
 
@@ -83,7 +93,9 @@ def get_connection():
 
     except Error as e:
 
-        logger.error(f"❌ Database connection failed: {e}")
+        logger.error(
+            f"❌ Database connection failed: {e}"
+        )
 
         raise
 
@@ -93,12 +105,6 @@ def get_connection():
 # ============================================================
 
 def load_raw_data(conn):
-    """
-    Load original OHLCV data.
-
-    IMPORTANT:
-    This function ONLY reads from btc_price_history.
-    """
 
     query = """
         SELECT
@@ -112,17 +118,28 @@ def load_raw_data(conn):
         ORDER BY date ASC
     """
 
-    logger.info("📥 Loading BTC OHLCV data...")
+    logger.info(
+        "📥 Loading BTC OHLCV data..."
+    )
 
-    df = pd.read_sql(query, conn)
+    df = pd.read_sql(
+        query,
+        conn
+    )
 
     if df.empty:
+
         raise ValueError(
             "❌ btc_price_history table mein koi data nahi hai!"
         )
 
     logger.info(
         f"✅ Loaded {len(df):,} OHLCV records"
+    )
+
+    logger.info(
+        f"📅 Raw data range: "
+        f"{df['date'].min()} → {df['date'].max()}"
     )
 
     return df
@@ -134,23 +151,29 @@ def load_raw_data(conn):
 
 def create_features(df):
 
-    logger.info("⚙️ Creating ML features...")
+    logger.info(
+        "⚙️ Creating ML features..."
+    )
+
+    df = df.copy()
 
     # --------------------------------------------------------
     # BASIC CLEANING
     # --------------------------------------------------------
 
-    df = df.copy()
-
-    df["date"] = pd.to_datetime(df["date"])
-
-    df = df.sort_values("date")
-
-    df = df.drop_duplicates(
-        subset=["date"]
+    df["date"] = pd.to_datetime(
+        df["date"]
     )
 
-    # Make sure numeric columns are numeric
+    df = df.sort_values(
+        "date"
+    )
+
+    df = df.drop_duplicates(
+        subset=["date"],
+        keep="last"
+    )
+
     numeric_columns = [
         "open",
         "high",
@@ -160,10 +183,16 @@ def create_features(df):
     ]
 
     for col in numeric_columns:
+
         df[col] = pd.to_numeric(
             df[col],
             errors="coerce"
         )
+
+    # Remove rows where raw OHLCV is incomplete
+    df = df.dropna(
+        subset=numeric_columns
+    ).copy()
 
     # --------------------------------------------------------
     # 1. RETURNS
@@ -215,13 +244,11 @@ def create_features(df):
         / df["open"]
     )
 
-    # Upper wick
     df["upper_wick"] = (
         df["high"]
         - df[["open", "close"]].max(axis=1)
     )
 
-    # Lower wick
     df["lower_wick"] = (
         df[["open", "close"]].min(axis=1)
         - df["low"]
@@ -284,31 +311,44 @@ def create_features(df):
 
     df["ema_12"] = (
         df["close"]
-        .ewm(span=12, adjust=False)
+        .ewm(
+            span=12,
+            adjust=False
+        )
         .mean()
     )
 
     df["ema_26"] = (
         df["close"]
-        .ewm(span=26, adjust=False)
+        .ewm(
+            span=26,
+            adjust=False
+        )
         .mean()
     )
 
     df["ema_50"] = (
         df["close"]
-        .ewm(span=50, adjust=False)
+        .ewm(
+            span=50,
+            adjust=False
+        )
         .mean()
     )
 
     # --------------------------------------------------------
-    # 7. RSI - 14
+    # 7. RSI
     # --------------------------------------------------------
 
     delta = df["close"].diff()
 
-    gain = delta.clip(lower=0)
+    gain = delta.clip(
+        lower=0
+    )
 
-    loss = -delta.clip(upper=0)
+    loss = -delta.clip(
+        upper=0
+    )
 
     avg_gain = (
         gain.rolling(14).mean()
@@ -318,14 +358,16 @@ def create_features(df):
         loss.rolling(14).mean()
     )
 
-    rs = avg_gain / avg_loss
+    rs = (
+        avg_gain / avg_loss
+    )
 
     df["rsi_14"] = (
         100 - (100 / (1 + rs))
     )
 
     # --------------------------------------------------------
-    # 8. ROC - RATE OF CHANGE
+    # 8. ROC
     # --------------------------------------------------------
 
     df["roc_7"] = (
@@ -418,11 +460,13 @@ def create_features(df):
     df["bb_middle"] = bb_middle
 
     df["bb_upper"] = (
-        bb_middle + (2 * bb_std)
+        bb_middle
+        + (2 * bb_std)
     )
 
     df["bb_lower"] = (
-        bb_middle - (2 * bb_std)
+        bb_middle
+        - (2 * bb_std)
     )
 
     df["bb_width"] = (
@@ -439,7 +483,7 @@ def create_features(df):
     )
 
     # --------------------------------------------------------
-    # 13. ATR - 14
+    # 13. ATR
     # --------------------------------------------------------
 
     previous_close = (
@@ -475,13 +519,19 @@ def create_features(df):
 
     ema_12 = (
         df["close"]
-        .ewm(span=12, adjust=False)
+        .ewm(
+            span=12,
+            adjust=False
+        )
         .mean()
     )
 
     ema_26 = (
         df["close"]
-        .ewm(span=26, adjust=False)
+        .ewm(
+            span=26,
+            adjust=False
+        )
         .mean()
     )
 
@@ -491,7 +541,10 @@ def create_features(df):
 
     df["macd_signal"] = (
         df["macd"]
-        .ewm(span=9, adjust=False)
+        .ewm(
+            span=9,
+            adjust=False
+        )
         .mean()
     )
 
@@ -500,18 +553,9 @@ def create_features(df):
         - df["macd_signal"]
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # 15. TARGET
-    # --------------------------------------------------------
-    #
-    # Next-day return
-    #
-    # target_return =
-    # tomorrow_close / today_close - 1
-    #
-    # shift(-1) means FUTURE value.
-    # This is TARGET only, NOT a feature.
-    # --------------------------------------------------------
+    # ========================================================
 
     df["target_return"] = (
         df["close"].shift(-1)
@@ -519,48 +563,169 @@ def create_features(df):
         - 1
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # 16. TARGET DIRECTION
-    # --------------------------------------------------------
-    #
-    # Optional classification target:
-    #
-    # 1 = next day goes up
-    # 0 = next day goes down / unchanged
-    #
-    # --------------------------------------------------------
+    # ========================================================
 
-    df["target_direction"] = (
-        df["target_return"] > 0
-    ).astype(int)
+    # IMPORTANT:
+    # Do NOT convert unknown latest target to 0.
+    #
+    # If target_return is NaN:
+    # target_direction must remain NaN.
 
-    # --------------------------------------------------------
-    # CLEAN INF / NAN
-    # --------------------------------------------------------
+    df["target_direction"] = np.where(
+        df["target_return"].notna(),
+        np.where(
+            df["target_return"] > 0,
+            1,
+            0
+        ),
+        np.nan
+    )
+
+    # ========================================================
+    # CLEAN INF
+    # ========================================================
 
     df = df.replace(
         [np.inf, -np.inf],
         np.nan
     )
 
-    # IMPORTANT:
-    # We don't drop NaN before creating all indicators.
-    # Indicators such as SMA_200 naturally require
-    # approximately 200 rows.
+    # ========================================================
+    # FEATURE COLUMNS
+    # ========================================================
+
+    feature_columns = [
+
+        "return_1d",
+        "return_3d",
+        "return_7d",
+        "return_14d",
+        "return_30d",
+
+        "price_change",
+        "price_change_pct",
+
+        "candle_body",
+        "candle_body_pct",
+
+        "upper_wick",
+        "lower_wick",
+
+        "upper_wick_pct",
+        "lower_wick_pct",
+
+        "daily_range",
+        "daily_range_pct",
+
+        "sma_7",
+        "sma_14",
+        "sma_30",
+        "sma_50",
+        "sma_100",
+        "sma_200",
+
+        "ema_12",
+        "ema_26",
+        "ema_50",
+
+        "rsi_14",
+
+        "roc_7",
+        "roc_14",
+
+        "volatility_7",
+        "volatility_14",
+        "volatility_30",
+
+        "volume_change",
+        "volume_sma_7",
+        "volume_sma_30",
+        "volume_ratio",
+
+        "sma_7_30_ratio",
+        "sma_30_200_ratio",
+
+        "bb_middle",
+        "bb_upper",
+        "bb_lower",
+        "bb_width",
+        "bb_position",
+
+        "atr_14",
+
+        "macd",
+        "macd_signal",
+        "macd_hist"
+    ]
+
+    # ========================================================
+    # DROP ONLY ROWS WITH INVALID FEATURES
+    # ========================================================
 
     before = len(df)
 
-    df = df.dropna()
+    df = df.dropna(
+        subset=feature_columns
+    ).copy()
 
     after = len(df)
 
     logger.info(
         f"🧹 Removed {before - after:,} rows "
-        f"due to NaN/insufficient history"
+        f"due to insufficient feature history."
+    )
+
+    # ========================================================
+    # LATEST ROW INFORMATION
+    # ========================================================
+
+    if df.empty:
+
+        raise ValueError(
+            "❌ No valid feature rows remain."
+        )
+
+    latest_row = df.iloc[-1]
+
+    logger.info(
+        "================================================"
     )
 
     logger.info(
-        f"✅ Final ML dataset: {after:,} rows"
+        f"📅 Latest feature date: "
+        f"{latest_row['date'].date()}"
+    )
+
+    logger.info(
+        f"💰 Latest close: "
+        f"{float(latest_row['close']):,.2f}"
+    )
+
+    if pd.isna(
+        latest_row["target_return"]
+    ):
+
+        logger.info(
+            "🎯 Latest target_return: NULL "
+            "(expected - next day not available yet)"
+        )
+
+    else:
+
+        logger.info(
+            f"🎯 Latest target_return: "
+            f"{float(latest_row['target_return']):+.6%}"
+        )
+
+    logger.info(
+        f"✅ Final ML feature dataset: "
+        f"{len(df):,} rows"
+    )
+
+    logger.info(
+        "================================================"
     )
 
     return df
@@ -577,9 +742,6 @@ def create_ml_table(conn):
     )
 
     cursor = conn.cursor()
-
-    # Remove ONLY the ML table.
-    # Original btc_price_history remains untouched.
 
     cursor.execute(
         "DROP TABLE IF EXISTS btc_ml_features"
@@ -607,8 +769,10 @@ def create_ml_table(conn):
 
             candle_body DOUBLE,
             candle_body_pct DOUBLE,
+
             upper_wick DOUBLE,
             lower_wick DOUBLE,
+
             upper_wick_pct DOUBLE,
             lower_wick_pct DOUBLE,
 
@@ -655,13 +819,15 @@ def create_ml_table(conn):
             macd_signal DOUBLE,
             macd_hist DOUBLE,
 
-            target_return DOUBLE,
-            target_direction TINYINT
+            target_return DOUBLE NULL,
+            target_direction TINYINT NULL
 
         )
     """
 
-    cursor.execute(create_query)
+    cursor.execute(
+        create_query
+    )
 
     conn.commit()
 
@@ -685,7 +851,9 @@ def store_features(conn, df):
     cursor = conn.cursor()
 
     columns = [
+
         "date",
+
         "open",
         "high",
         "low",
@@ -703,8 +871,10 @@ def store_features(conn, df):
 
         "candle_body",
         "candle_body_pct",
+
         "upper_wick",
         "lower_wick",
+
         "upper_wick_pct",
         "lower_wick_pct",
 
@@ -759,7 +929,9 @@ def store_features(conn, df):
         ["%s"] * len(columns)
     )
 
-    column_names = ", ".join(columns)
+    column_names = ", ".join(
+        columns
+    )
 
     query = f"""
         INSERT INTO btc_ml_features
@@ -777,29 +949,33 @@ def store_features(conn, df):
 
             value = row[column]
 
-            # Convert pandas Timestamp to date
             if column == "date":
+
                 value = value.date()
 
-            # Convert numpy values to Python values
             elif pd.isna(value):
+
                 value = None
 
             elif isinstance(
                 value,
                 (np.integer,)
             ):
+
                 value = int(value)
 
             elif isinstance(
                 value,
                 (np.floating,)
             ):
+
                 value = float(value)
 
             values.append(value)
 
-        data.append(tuple(values))
+        data.append(
+            tuple(values)
+        )
 
     cursor.executemany(
         query,
@@ -829,19 +1005,20 @@ def main():
 
     try:
 
-        # Connect
         conn = get_connection()
 
-        # Read original data
-        df = load_raw_data(conn)
+        df = load_raw_data(
+            conn
+        )
 
-        # Create features
-        ml_df = create_features(df)
+        ml_df = create_features(
+            df
+        )
 
-        # Create separate table
-        create_ml_table(conn)
+        create_ml_table(
+            conn
+        )
 
-        # Store features
         store_features(
             conn,
             ml_df
@@ -856,12 +1033,30 @@ def main():
         )
 
         logger.info(
-            f"📊 Original records: {len(df):,}"
+            f"📊 Original records: "
+            f"{len(df):,}"
         )
 
         logger.info(
-            f"📊 ML records: {len(ml_df):,}"
+            f"📊 ML records: "
+            f"{len(ml_df):,}"
         )
+
+        logger.info(
+            f"📅 ML latest date: "
+            f"{ml_df['date'].max().date()}"
+        )
+
+        latest_target = ml_df.iloc[-1][
+            "target_return"
+        ]
+
+        if pd.isna(latest_target):
+
+            logger.info(
+                "🎯 Latest row target: NULL "
+                "→ ready for next-day prediction"
+            )
 
         logger.info(
             "🗄️ Original table: btc_price_history"
@@ -882,6 +1077,7 @@ def main():
         )
 
         if conn:
+
             conn.rollback()
 
         raise
@@ -902,4 +1098,5 @@ def main():
 # ============================================================
 
 if __name__ == "__main__":
+
     main()

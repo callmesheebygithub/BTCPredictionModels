@@ -1,3 +1,36 @@
+"""
+daily_btc_prediction.py
+
+Purpose:
+    Generate next-day BTC predictions using:
+
+        Linear Regression
+        Random Forest
+        XGBoost
+        LightGBM
+        LSTM
+        GRU
+
+Example:
+
+    Latest available candle:
+        2026-09-04
+
+    Current close:
+        $XXX
+
+    Prediction:
+        2026-09-05
+
+The latest candle does NOT need a target_return.
+
+Prediction flow:
+
+    Sep 3 -> known Sep 4 result -> training/evaluation
+    Sep 4 -> unknown Sep 5 result -> prediction
+    Sep 5 -> later becomes actual -> evaluate Sep 4 prediction
+"""
+
 import os
 import joblib
 import mysql.connector
@@ -5,6 +38,7 @@ import numpy as np
 import pandas as pd
 
 from dotenv import load_dotenv
+
 from tensorflow.keras.models import load_model
 
 
@@ -38,7 +72,7 @@ def get_connection():
 
 
 # ============================================================
-# CREATE PREDICTION TABLE
+# CREATE / MIGRATE PREDICTION TABLE
 # ============================================================
 
 def create_prediction_table():
@@ -47,9 +81,15 @@ def create_prediction_table():
 
     cursor = conn.cursor()
 
+    # --------------------------------------------------------
+    # New table structure
+    # --------------------------------------------------------
+
     query = """
 
     CREATE TABLE IF NOT EXISTS btc_predictions (
+
+        feature_date DATE NOT NULL,
 
         prediction_date DATE NOT NULL,
 
@@ -82,7 +122,9 @@ def create_prediction_table():
 
     """
 
-    cursor.execute(query)
+    cursor.execute(
+        query
+    )
 
     conn.commit()
 
@@ -92,7 +134,7 @@ def create_prediction_table():
 
 
 # ============================================================
-# LOAD DATA
+# LOAD ML DATA
 # ============================================================
 
 def load_ml_data():
@@ -114,6 +156,12 @@ def load_ml_data():
 
     conn.close()
 
+    if not df.empty:
+
+        df["date"] = pd.to_datetime(
+            df["date"]
+        )
+
     return df
 
 
@@ -129,22 +177,57 @@ def get_feature_columns(df):
         "target_direction"
     ]
 
-    features = [
+    return [
         column
         for column in df.columns
         if column not in excluded_columns
     ]
 
-    return features
+
+# ============================================================
+# FIND LATEST VALID FEATURE ROW
+# ============================================================
+
+def get_latest_prediction_row(df):
+
+    features = get_feature_columns(
+        df
+    )
+
+    # Find rows where all model features exist.
+    valid_mask = (
+        df[features]
+        .notna()
+        .all(axis=1)
+    )
+
+    valid_df = df[
+        valid_mask
+    ].copy()
+
+    if valid_df.empty:
+
+        raise ValueError(
+            "❌ No row contains a complete "
+            "feature set for prediction."
+        )
+
+    latest_row = valid_df.iloc[-1]
+
+    return latest_row
 
 
 # ============================================================
 # CLASSICAL MODELS
 # ============================================================
 
-def predict_classical_models(df):
+def predict_classical_models(
+    df,
+    latest_row
+):
 
     model_names = [
+
         "linear_regression",
         "random_forest",
         "xgboost",
@@ -153,15 +236,17 @@ def predict_classical_models(df):
 
     results = []
 
-    # Latest row for prediction
-    latest_row = df.iloc[-1]
-
-    current_close = float(
-        latest_row["close"]
+    feature_date = pd.Timestamp(
+        latest_row["date"]
     )
 
     prediction_date = (
-        latest_row["date"]
+        feature_date
+        + pd.Timedelta(days=1)
+    )
+
+    current_close = float(
+        latest_row["close"]
     )
 
     for model_name in model_names:
@@ -171,7 +256,9 @@ def predict_classical_models(df):
             f"{model_name}.pkl"
         )
 
-        if not os.path.exists(model_path):
+        if not os.path.exists(
+            model_path
+        ):
 
             print(
                 f"[WARNING] "
@@ -190,9 +277,34 @@ def predict_classical_models(df):
 
             features = bundle["features"]
 
-            X_latest = latest_row[
-                features
-            ].values.reshape(1, -1)
+            # ------------------------------------------------
+            # Make sure all required features exist
+            # ------------------------------------------------
+
+            missing_features = [
+                feature
+                for feature in features
+                if feature not in latest_row.index
+            ]
+
+            if missing_features:
+
+                raise ValueError(
+                    f"Missing features: "
+                    f"{missing_features}"
+                )
+
+            X_latest = (
+                latest_row[
+                    features
+                ]
+                .values
+                .reshape(1, -1)
+            )
+
+            # ------------------------------------------------
+            # Prediction
+            # ------------------------------------------------
 
             predicted_return = float(
                 model.predict(
@@ -204,7 +316,8 @@ def predict_classical_models(df):
                 current_close
                 *
                 (
-                    1 +
+                    1
+                    +
                     predicted_return
                 )
             )
@@ -215,10 +328,13 @@ def predict_classical_models(df):
                 else 0
             )
 
-            results.append({
+            result = {
+
+                "feature_date":
+                    feature_date.date(),
 
                 "prediction_date":
-                    prediction_date,
+                    prediction_date.date(),
 
                 "model_name":
                     model_name,
@@ -234,15 +350,20 @@ def predict_classical_models(df):
 
                 "predicted_direction":
                     predicted_direction
+            }
 
-            })
+            results.append(
+                result
+            )
 
             print(
                 f"{model_name:<20}"
                 f" Return: "
                 f"{predicted_return:+.4%}"
                 f" | Price: "
-                f"{predicted_price:,.2f}"
+                f"${predicted_price:,.2f}"
+                f" | Predicting: "
+                f"{prediction_date.date()}"
             )
 
         except Exception as e:
@@ -256,10 +377,13 @@ def predict_classical_models(df):
 
 
 # ============================================================
-# LSTM / GRU PREDICTION
+# DEEP MODEL PREDICTION
 # ============================================================
 
-def predict_deep_models(df):
+def predict_deep_models(
+    df,
+    latest_row
+):
 
     scaler_path = os.path.join(
         MODEL_DIR,
@@ -283,74 +407,137 @@ def predict_deep_models(df):
             scaler_path
         )
 
-        scaler = scaler_bundle["scaler"]
+        scaler = scaler_bundle[
+            "scaler"
+        ]
 
-        features = scaler_bundle["features"]
+        features = scaler_bundle[
+            "features"
+        ]
+
+        saved_sequence_length = (
+            scaler_bundle.get(
+                "sequence_length",
+                SEQUENCE_LENGTH
+            )
+        )
 
     except Exception as e:
 
         print(
-            f"[ERROR] Loading deep scaler: {e}"
+            f"[ERROR] Loading deep scaler: "
+            f"{e}"
+        )
+
+        return []
+
+    sequence_length = (
+        saved_sequence_length
+    )
+
+    # --------------------------------------------------------
+    # Check features
+    # --------------------------------------------------------
+
+    missing_features = [
+        feature
+        for feature in features
+        if feature not in df.columns
+    ]
+
+    if missing_features:
+
+        print(
+            "[ERROR] Deep model missing features:"
+        )
+
+        print(
+            missing_features
         )
 
         return []
 
     # --------------------------------------------------------
-    # Check enough rows
+    # Use rows with complete deep-model features
     # --------------------------------------------------------
 
-    if len(df) < SEQUENCE_LENGTH:
+    valid_df = df[
+        features
+    ].replace(
+        [np.inf, -np.inf],
+        np.nan
+    )
+
+    valid_mask = (
+        valid_df
+        .notna()
+        .all(axis=1)
+    )
+
+    usable_df = df[
+        valid_mask
+    ].copy()
+
+    if len(usable_df) < sequence_length:
 
         print(
-            "Not enough data for "
+            "Not enough valid rows for "
             "LSTM/GRU prediction."
         )
 
         return []
 
+    # --------------------------------------------------------
+    # Latest sequence
+    # --------------------------------------------------------
+
+    recent_data = usable_df[
+        features
+    ].tail(
+        sequence_length
+    )
+
+    X_recent = (
+        recent_data
+        .values
+        .astype(np.float32)
+    )
+
     try:
-
-        # ----------------------------------------------------
-        # IMPORTANT:
-        # Use latest 30 rows only.
-        # ----------------------------------------------------
-
-        recent_data = df[
-            features
-        ].tail(
-            SEQUENCE_LENGTH
-        )
-
-        X_recent = recent_data.values
 
         X_scaled = scaler.transform(
             X_recent
-        )
-
-        X_sequence = X_scaled.reshape(
-            1,
-            SEQUENCE_LENGTH,
-            len(features)
-        )
-
-        latest_row = df.iloc[-1]
-
-        current_close = float(
-            latest_row["close"]
-        )
-
-        prediction_date = (
-            latest_row["date"]
+        ).astype(
+            np.float32
         )
 
     except Exception as e:
 
         print(
-            f"[ERROR] Preparing deep "
-            f"learning input: {e}"
+            f"[ERROR] Scaling deep input: "
+            f"{e}"
         )
 
         return []
+
+    X_sequence = X_scaled.reshape(
+        1,
+        sequence_length,
+        len(features)
+    )
+
+    feature_date = pd.Timestamp(
+        latest_row["date"]
+    )
+
+    prediction_date = (
+        feature_date
+        + pd.Timedelta(days=1)
+    )
+
+    current_close = float(
+        latest_row["close"]
+    )
 
     results = []
 
@@ -363,7 +550,9 @@ def predict_deep_models(df):
         "lstm.keras"
     )
 
-    if os.path.exists(lstm_path):
+    if os.path.exists(
+        lstm_path
+    ):
 
         try:
 
@@ -382,7 +571,8 @@ def predict_deep_models(df):
                 current_close
                 *
                 (
-                    1 +
+                    1
+                    +
                     predicted_return
                 )
             )
@@ -395,8 +585,11 @@ def predict_deep_models(df):
 
             results.append({
 
+                "feature_date":
+                    feature_date.date(),
+
                 "prediction_date":
-                    prediction_date,
+                    prediction_date.date(),
 
                 "model_name":
                     "lstm",
@@ -412,7 +605,6 @@ def predict_deep_models(df):
 
                 "predicted_direction":
                     predicted_direction
-
             })
 
             print(
@@ -420,7 +612,9 @@ def predict_deep_models(df):
                 f" Return: "
                 f"{predicted_return:+.4%}"
                 f" | Price: "
-                f"{predicted_price:,.2f}"
+                f"${predicted_price:,.2f}"
+                f" | Predicting: "
+                f"{prediction_date.date()}"
             )
 
         except Exception as e:
@@ -432,7 +626,8 @@ def predict_deep_models(df):
     else:
 
         print(
-            "[WARNING] lstm.keras not found."
+            "[WARNING] "
+            "lstm.keras not found."
         )
 
     # ========================================================
@@ -444,7 +639,9 @@ def predict_deep_models(df):
         "gru.keras"
     )
 
-    if os.path.exists(gru_path):
+    if os.path.exists(
+        gru_path
+    ):
 
         try:
 
@@ -463,7 +660,8 @@ def predict_deep_models(df):
                 current_close
                 *
                 (
-                    1 +
+                    1
+                    +
                     predicted_return
                 )
             )
@@ -476,8 +674,11 @@ def predict_deep_models(df):
 
             results.append({
 
+                "feature_date":
+                    feature_date.date(),
+
                 "prediction_date":
-                    prediction_date,
+                    prediction_date.date(),
 
                 "model_name":
                     "gru",
@@ -493,7 +694,6 @@ def predict_deep_models(df):
 
                 "predicted_direction":
                     predicted_direction
-
             })
 
             print(
@@ -501,7 +701,9 @@ def predict_deep_models(df):
                 f" Return: "
                 f"{predicted_return:+.4%}"
                 f" | Price: "
-                f"{predicted_price:,.2f}"
+                f"${predicted_price:,.2f}"
+                f" | Predicting: "
+                f"{prediction_date.date()}"
             )
 
         except Exception as e:
@@ -513,7 +715,8 @@ def predict_deep_models(df):
     else:
 
         print(
-            "[WARNING] gru.keras not found."
+            "[WARNING] "
+            "gru.keras not found."
         )
 
     return results
@@ -523,7 +726,9 @@ def predict_deep_models(df):
 # SAVE PREDICTIONS
 # ============================================================
 
-def save_predictions(results):
+def save_predictions(
+    results
+):
 
     if not results:
 
@@ -541,6 +746,7 @@ def save_predictions(results):
 
     INSERT INTO btc_predictions
     (
+        feature_date,
         prediction_date,
         model_name,
         current_close,
@@ -556,10 +762,14 @@ def save_predictions(results):
         %s,
         %s,
         %s,
+        %s,
         %s
     )
 
     ON DUPLICATE KEY UPDATE
+
+        feature_date =
+            VALUES(feature_date),
 
         current_close =
             VALUES(current_close),
@@ -583,6 +793,7 @@ def save_predictions(results):
         cursor.execute(
             query,
             (
+                result["feature_date"],
                 result["prediction_date"],
                 result["model_name"],
                 result["current_close"],
@@ -605,15 +816,209 @@ def save_predictions(results):
 
 
 # ============================================================
-# DISPLAY SUMMARY
+# EVALUATE PREVIOUS PREDICTIONS
 # ============================================================
 
-def display_summary(results):
+def evaluate_previous_predictions():
+
+    """
+    Evaluate predictions once the actual target day
+    becomes available.
+
+    Example:
+
+        Prediction:
+            feature_date = Sep 4
+            prediction_date = Sep 5
+
+        Once Sep 5 data exists:
+
+            actual_return =
+                Sep 5 close / Sep 4 close - 1
+
+            actual_price =
+                Sep 5 close
+
+            actual_direction =
+                actual_return > 0
+    """
+
+    conn = get_connection()
+
+    cursor = conn.cursor(
+        dictionary=True
+    )
+
+    query = """
+
+        SELECT
+            p.prediction_date,
+            p.model_name,
+            p.current_close,
+            p.predicted_return,
+            p.predicted_price,
+            p.predicted_direction,
+
+            d.close AS actual_price
+
+        FROM btc_predictions p
+
+        INNER JOIN btc_ml_features d
+            ON d.date = p.prediction_date
+
+        WHERE
+            p.evaluated = 0
+
+    """
+
+    cursor.execute(
+        query
+    )
+
+    rows = cursor.fetchall()
+
+    if not rows:
+
+        cursor.close()
+
+        conn.close()
+
+        print(
+            "No previous predictions ready "
+            "for evaluation."
+        )
+
+        return
 
     print("\n")
     print("=" * 85)
-    print("BTC NEXT-DAY PREDICTIONS")
+    print(
+        "EVALUATING PREVIOUS PREDICTIONS"
+    )
     print("=" * 85)
+
+    update_query = """
+
+        UPDATE btc_predictions
+
+        SET
+            actual_return = %s,
+            actual_price = %s,
+            actual_direction = %s,
+            evaluated = 1
+
+        WHERE
+            prediction_date = %s
+            AND model_name = %s
+
+    """
+
+    evaluated_count = 0
+
+    for row in rows:
+
+        prediction_date = pd.Timestamp(
+            row["prediction_date"]
+        )
+
+        actual_price = float(
+            row["actual_price"]
+        )
+
+        current_close = float(
+            row["current_close"]
+        )
+
+        actual_return = (
+            actual_price
+            /
+            current_close
+            - 1
+        )
+
+        actual_direction = (
+            1
+            if actual_return > 0
+            else 0
+        )
+
+        predicted_return = float(
+            row["predicted_return"]
+        )
+
+        predicted_direction = int(
+            row["predicted_direction"]
+        )
+
+        direction_correct = (
+            predicted_direction
+            ==
+            actual_direction
+        )
+
+        update_values = (
+
+            actual_return,
+
+            actual_price,
+
+            actual_direction,
+
+            row["prediction_date"],
+
+            row["model_name"]
+        )
+
+        cursor.execute(
+            update_query,
+            update_values
+        )
+
+        evaluated_count += 1
+
+        result_text = (
+            "CORRECT"
+            if direction_correct
+            else "WRONG"
+        )
+
+        print(
+            f"{str(row['model_name']):<20}"
+            f" | Date: "
+            f"{prediction_date.date()}"
+            f" | Pred: "
+            f"{predicted_return:+.4%}"
+            f" | Actual: "
+            f"{actual_return:+.4%}"
+            f" | {result_text}"
+        )
+
+    conn.commit()
+
+    cursor.close()
+
+    conn.close()
+
+    print(
+        f"\nEvaluated {evaluated_count} "
+        f"previous predictions."
+    )
+
+
+# ============================================================
+# DISPLAY SUMMARY
+# ============================================================
+
+def display_summary(
+    results
+):
+
+    print("\n")
+    print("=" * 100)
+    print(
+        "BTC NEXT-DAY PREDICTIONS"
+    )
+    print("=" * 100)
 
     if not results:
 
@@ -633,6 +1038,10 @@ def display_summary(results):
 
         print(
             f"{result['model_name']:<20}"
+            f" | From: "
+            f"{result['feature_date']}"
+            f" | Predicting: "
+            f"{result['prediction_date']}"
             f" | Return: "
             f"{result['predicted_return']:+.4%}"
             f" | Price: "
@@ -641,7 +1050,9 @@ def display_summary(results):
             f"{direction}"
         )
 
-    print("=" * 85)
+    print(
+        "=" * 100
+    )
 
 
 # ============================================================
@@ -651,19 +1062,21 @@ def display_summary(results):
 def main():
 
     print("\n")
-    print("=" * 85)
-    print("BTC MULTI-MODEL DAILY PREDICTION")
-    print("=" * 85)
+    print("=" * 100)
+    print(
+        "BTC MULTI-MODEL DAILY PREDICTION"
+    )
+    print("=" * 100)
 
-    # --------------------------------------------------------
-    # Create table
-    # --------------------------------------------------------
+    # ========================================================
+    # CREATE TABLE
+    # ========================================================
 
     create_prediction_table()
 
-    # --------------------------------------------------------
-    # Load data
-    # --------------------------------------------------------
+    # ========================================================
+    # LOAD DATA
+    # ========================================================
 
     print(
         "\nLoading BTC ML data..."
@@ -681,30 +1094,61 @@ def main():
         return
 
     print(
-        f"Loaded {len(df)} records."
+        f"Loaded {len(df):,} records."
     )
 
-    # --------------------------------------------------------
-    # IMPORTANT:
-    # We use the latest row directly.
-    # We do NOT require target_return to be present.
-    # --------------------------------------------------------
+    # ========================================================
+    # LATEST FEATURE ROW
+    # ========================================================
 
-    latest = df.iloc[-1]
+    latest = get_latest_prediction_row(
+        df
+    )
+
+    feature_date = pd.Timestamp(
+        latest["date"]
+    )
+
+    prediction_date = (
+        feature_date
+        + pd.Timedelta(days=1)
+    )
+
+    current_close = float(
+        latest["close"]
+    )
+
+    print("\n")
+    print("=" * 70)
 
     print(
-        f"\nLatest BTC date: "
-        f"{latest['date']}"
+        f"Latest feature date: "
+        f"{feature_date.date()}"
     )
 
     print(
         f"Latest close: "
-        f"${float(latest['close']):,.2f}"
+        f"${current_close:,.2f}"
     )
 
-    # --------------------------------------------------------
-    # Classical models
-    # --------------------------------------------------------
+    print(
+        f"🎯 Prediction date: "
+        f"{prediction_date.date()}"
+    )
+
+    print(
+        "=" * 70
+    )
+
+    # ========================================================
+    # EVALUATE OLD PREDICTIONS FIRST
+    # ========================================================
+
+    evaluate_previous_predictions()
+
+    # ========================================================
+    # CLASSICAL MODELS
+    # ========================================================
 
     print("\n")
     print(
@@ -712,12 +1156,15 @@ def main():
     )
 
     classical_results = (
-        predict_classical_models(df)
+        predict_classical_models(
+            df,
+            latest
+        )
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # LSTM / GRU
-    # --------------------------------------------------------
+    # ========================================================
 
     print("\n")
     print(
@@ -725,12 +1172,15 @@ def main():
     )
 
     deep_results = (
-        predict_deep_models(df)
+        predict_deep_models(
+            df,
+            latest
+        )
     )
 
-    # --------------------------------------------------------
-    # Combine
-    # --------------------------------------------------------
+    # ========================================================
+    # COMBINE
+    # ========================================================
 
     all_results = (
         classical_results
@@ -738,17 +1188,17 @@ def main():
         deep_results
     )
 
-    # --------------------------------------------------------
-    # Save
-    # --------------------------------------------------------
+    # ========================================================
+    # SAVE
+    # ========================================================
 
     save_predictions(
         all_results
     )
 
-    # --------------------------------------------------------
-    # Display
-    # --------------------------------------------------------
+    # ========================================================
+    # DISPLAY
+    # ========================================================
 
     display_summary(
         all_results
