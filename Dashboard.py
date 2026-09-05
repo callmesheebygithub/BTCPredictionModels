@@ -98,6 +98,19 @@ except ImportError:
 
 
 # ============================================================
+# BACKTEST ENGINE
+# ============================================================
+
+try:
+
+    from backtesting import run_backtests
+
+except ImportError:
+
+    run_backtests = None
+
+
+# ============================================================
 # PAGE CONFIG
 # ============================================================
 
@@ -594,6 +607,163 @@ def load_model_performance():
                 pass
 
             return pd.DataFrame()
+
+
+# ============================================================
+# LOAD PROFESSIONAL BACKTEST SUMMARY
+# ============================================================
+
+def load_backtest_summary():
+
+    connection = get_db_connection()
+
+    if connection is None:
+        return pd.DataFrame()
+
+    query = """
+        SELECT
+            run_date,
+            model_name,
+            initial_capital,
+            final_capital,
+            roi_pct,
+            win_rate_pct,
+            max_drawdown_pct,
+            sharpe_ratio,
+            total_trades,
+            winning_trades,
+            losing_trades,
+            gross_pnl,
+            net_pnl,
+            total_fees,
+            total_slippage,
+            risk_per_trade_pct,
+            fee_bps,
+            slippage_bps,
+            best_trade_pct,
+            worst_trade_pct,
+            avg_trade_return_pct,
+            updated_at
+        FROM btc_backtest_summary
+        WHERE run_date = (
+            SELECT MAX(run_date)
+            FROM btc_backtest_summary
+        )
+        ORDER BY roi_pct DESC
+    """
+
+    try:
+
+        df = pd.read_sql(
+            query,
+            connection
+        )
+
+        connection.close()
+
+        if not df.empty:
+
+            for column in [
+                "run_date",
+                "updated_at"
+            ]:
+
+                df[column] = pd.to_datetime(
+                    df[column]
+                )
+
+        return df
+
+    except Exception:
+
+        try:
+            connection.close()
+        except:
+            pass
+
+        return pd.DataFrame()
+
+
+# ============================================================
+# LOAD PROFESSIONAL BACKTEST TRADES
+# ============================================================
+
+def load_backtest_trades(
+    model_name=None
+):
+
+    connection = get_db_connection()
+
+    if connection is None:
+        return pd.DataFrame()
+
+    params = []
+
+    query = """
+        SELECT
+            run_date,
+            trade_date,
+            model_name,
+            side,
+            entry_price,
+            exit_price,
+            actual_return,
+            strategy_return,
+            capital_before,
+            position_notional,
+            gross_pnl,
+            fee_amount,
+            slippage_amount,
+            net_pnl,
+            capital_after,
+            drawdown_pct
+        FROM btc_backtest_trades
+        WHERE run_date = (
+            SELECT MAX(run_date)
+            FROM btc_backtest_trades
+        )
+    """
+
+    if model_name is not None:
+
+        query += " AND model_name = %s"
+        params.append(
+            model_name
+        )
+
+    query += " ORDER BY trade_date ASC, model_name ASC"
+
+    try:
+
+        df = pd.read_sql(
+            query,
+            connection,
+            params=tuple(params)
+        )
+
+        connection.close()
+
+        if not df.empty:
+
+            for column in [
+                "run_date",
+                "trade_date"
+            ]:
+
+                df[column] = pd.to_datetime(
+                    df[column]
+                )
+
+        return df
+
+    except Exception:
+
+        try:
+            connection.close()
+        except:
+            pass
+
+        return pd.DataFrame()
 
 
 # ============================================================
@@ -2875,13 +3045,353 @@ def display_ml_dashboard():
         "🧪 Historical Backtest"
     )
 
-    if all_predictions.empty:
+    backtest_summary = load_backtest_summary()
+
+    bt1, bt2, bt3, bt4 = st.columns(4)
+
+    with bt1:
+
+        backtest_initial_capital = st.number_input(
+            "Initial Capital ($)",
+            min_value=100.0,
+            value=10000.0,
+            step=1000.0,
+            key="professional_backtest_initial_capital"
+        )
+
+    with bt2:
+
+        backtest_risk = st.number_input(
+            "Risk Per Trade (%)",
+            min_value=0.1,
+            max_value=100.0,
+            value=2.0,
+            step=0.1,
+            key="professional_backtest_risk"
+        )
+
+    with bt3:
+
+        backtest_fee_bps = st.number_input(
+            "Fee Per Side (bps)",
+            min_value=0.0,
+            value=10.0,
+            step=1.0,
+            key="professional_backtest_fee_bps"
+        )
+
+    with bt4:
+
+        backtest_slippage_bps = st.number_input(
+            "Slippage Per Side (bps)",
+            min_value=0.0,
+            value=5.0,
+            step=1.0,
+            key="professional_backtest_slippage_bps"
+        )
+
+    if st.button(
+        "Run / Refresh Backtest",
+        key="run_professional_backtest"
+    ):
+
+        if run_backtests is None:
+
+            st.error(
+                "backtesting.py could not be imported."
+            )
+
+        else:
+
+            with st.spinner(
+                "Running model backtests and saving stats..."
+            ):
+
+                try:
+
+                    summary_df, trades_df = run_backtests(
+                        initial_capital=backtest_initial_capital,
+                        risk_per_trade=backtest_risk / 100,
+                        fee_bps=backtest_fee_bps,
+                        slippage_bps=backtest_slippage_bps
+                    )
+
+                    if summary_df.empty:
+
+                        st.warning(
+                            "No evaluated predictions available "
+                            "for backtesting yet."
+                        )
+
+                    else:
+
+                        st.success(
+                            f"Backtest saved: "
+                            f"{len(summary_df)} models, "
+                            f"{len(trades_df):,} trades."
+                        )
+
+                        backtest_summary = load_backtest_summary()
+
+                except Exception as e:
+
+                    st.error(
+                        f"Backtest failed: {e}"
+                    )
+
+    if not backtest_summary.empty:
+
+        best_backtest = backtest_summary.iloc[0]
+
+        m1, m2, m3, m4 = st.columns(4)
+
+        with m1:
+
+            st.metric(
+                "Best Model",
+                DISPLAY_NAMES.get(
+                    best_backtest["model_name"],
+                    best_backtest["model_name"]
+                )
+            )
+
+        with m2:
+
+            st.metric(
+                "Final Capital",
+                f"${best_backtest['final_capital']:,.2f}"
+            )
+
+        with m3:
+
+            st.metric(
+                "ROI",
+                f"{best_backtest['roi_pct']:+.2f}%"
+            )
+
+        with m4:
+
+            st.metric(
+                "Sharpe Ratio",
+                f"{best_backtest['sharpe_ratio']:.2f}"
+            )
+
+        comparison = backtest_summary.copy()
+
+        comparison["Model"] = comparison["model_name"].map(
+            lambda x:
+                DISPLAY_NAMES.get(
+                    x,
+                    x
+                )
+        )
+
+        for column, label, template in [
+            ("final_capital", "Final Capital", "${:,.2f}"),
+            ("roi_pct", "ROI", "{:+.2f}%"),
+            ("win_rate_pct", "Win Rate", "{:.2f}%"),
+            ("max_drawdown_pct", "Max Drawdown", "{:.2f}%"),
+            ("sharpe_ratio", "Sharpe", "{:.2f}"),
+            ("net_pnl", "Net PnL", "${:,.2f}"),
+            ("total_fees", "Fees", "${:,.2f}"),
+            ("total_slippage", "Slippage", "${:,.2f}")
+        ]:
+
+            comparison[label] = comparison[column].map(
+                lambda x, fmt=template:
+                    fmt.format(x)
+            )
+
+        comparison_table = comparison[
+            [
+                "Model",
+                "Final Capital",
+                "ROI",
+                "Win Rate",
+                "Max Drawdown",
+                "Sharpe",
+                "total_trades",
+                "winning_trades",
+                "losing_trades",
+                "Net PnL",
+                "Fees",
+                "Slippage"
+            ]
+        ]
+
+        comparison_table.columns = [
+            "Model",
+            "Final Capital",
+            "ROI",
+            "Win Rate",
+            "Max Drawdown",
+            "Sharpe",
+            "Trades",
+            "Winning",
+            "Losing",
+            "Net PnL",
+            "Fees",
+            "Slippage"
+        ]
+
+        st.dataframe(
+            comparison_table,
+            use_container_width=True,
+            hide_index=True
+        )
+
+        valid_models = backtest_summary["model_name"].tolist()
+
+        selected_model = st.selectbox(
+            "Select Model",
+            valid_models,
+            format_func=lambda x:
+                DISPLAY_NAMES.get(
+                    x,
+                    x
+                ),
+            key="professional_backtest_model"
+        )
+
+        selected_summary = backtest_summary[
+            backtest_summary["model_name"]
+            ==
+            selected_model
+        ].iloc[0]
+
+        s1, s2, s3, s4 = st.columns(4)
+
+        with s1:
+
+            st.metric(
+                "Trades",
+                f"{int(selected_summary['total_trades'])}"
+            )
+
+        with s2:
+
+            st.metric(
+                "Winning / Losing",
+                (
+                    f"{int(selected_summary['winning_trades'])}"
+                    f" / "
+                    f"{int(selected_summary['losing_trades'])}"
+                )
+            )
+
+        with s3:
+
+            st.metric(
+                "Total Fees",
+                f"${selected_summary['total_fees']:,.2f}"
+            )
+
+        with s4:
+
+            st.metric(
+                "Total Slippage",
+                f"${selected_summary['total_slippage']:,.2f}"
+            )
+
+        trades = load_backtest_trades(
+            selected_model
+        )
+
+        if not trades.empty:
+
+            fig_equity = go.Figure()
+
+            fig_equity.add_trace(
+                go.Scatter(
+                    x=trades["trade_date"],
+                    y=trades["capital_after"],
+                    mode="lines+markers",
+                    name="Equity"
+                )
+            )
+
+            fig_equity.update_layout(
+                height=450,
+                title=(
+                    f"Equity Curve - "
+                    f"{DISPLAY_NAMES.get(
+                        selected_model,
+                        selected_model
+                    )}"
+                ),
+                xaxis_title="Date",
+                yaxis_title="Portfolio Value ($)",
+                hovermode="x unified"
+            )
+
+            st.plotly_chart(
+                fig_equity,
+                use_container_width=True
+            )
+
+            trade_view = trades.tail(25).copy()
+
+            trade_view["Date"] = trade_view[
+                "trade_date"
+            ].dt.strftime(
+                "%Y-%m-%d"
+            )
+
+            trade_view["Return"] = trade_view[
+                "strategy_return"
+            ].map(
+                lambda x:
+                    f"{x * 100:+.2f}%"
+            )
+
+            trade_view["Net PnL"] = trade_view[
+                "net_pnl"
+            ].map(
+                lambda x:
+                    f"${x:,.2f}"
+            )
+
+            trade_view["Capital"] = trade_view[
+                "capital_after"
+            ].map(
+                lambda x:
+                    f"${x:,.2f}"
+            )
+
+            st.dataframe(
+                trade_view[
+                    [
+                        "Date",
+                        "side",
+                        "entry_price",
+                        "exit_price",
+                        "Return",
+                        "position_notional",
+                        "Net PnL",
+                        "Capital",
+                        "drawdown_pct"
+                    ]
+                ],
+                use_container_width=True,
+                hide_index=True
+            )
+
+    if backtest_summary.empty:
+
+        st.info(
+            "Professional backtest stats will appear after "
+            "running backtesting.py or clicking refresh above."
+        )
+
+    show_legacy_backtest = False
+
+    if show_legacy_backtest and all_predictions.empty:
 
         st.info(
             "No historical prediction data available."
         )
 
-    else:
+    elif show_legacy_backtest:
 
         valid_models = [
             m
@@ -3646,23 +4156,46 @@ with st.sidebar:
 # MAIN HEADER
 # ============================================================
 
-st.markdown(
-    """
-    <div class="main-header">
+# ============================================================
+# MAIN DASHBOARD HEADER
+# ============================================================
 
-        <div class="main-header-title">
-            ₿ BTC AI Trading Dashboard
-        </div>
+st.markdown("""
+<style>
+.main-header {
+    background: linear-gradient(135deg, #ff9800, #ffad33);
+    padding: 28px 30px;
+    border-radius: 18px;
+    margin-bottom: 25px;
+    text-align: center;
+}
 
-        <div class="main-header-subtitle">
-            Technical Analysis + Machine Learning
-            + Deep Learning + AI Consensus
-        </div>
+.main-header-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 8px;
+}
 
+.main-header-subtitle {
+    font-size: 16px;
+    color: white;
+    opacity: 0.95;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<div class="main-header">
+    <div class="main-header-title">
+        ₿ BTC AI Trading Dashboard
     </div>
-    """,
-    unsafe_allow_html=True
-)
+    <div class="main-header-subtitle">
+        Technical Analysis + Machine Learning<br>
+        + Deep Learning + AI Consensus
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 
 # ============================================================

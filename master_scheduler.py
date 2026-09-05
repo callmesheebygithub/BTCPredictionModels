@@ -86,11 +86,11 @@ DATA_MODULE = "YahooFinanceDataOnce.py"
 
 FEATURE_MODULE = "prepare_btc_ml_data.py"
 
-EVALUATION_MODULE = "evaluate_prediction.py"
+EVALUATION_MODULE = "evaluate_predictions.py"
 
-PREDICTION_MODULE = "daily_btc_prediction.py"
+PREDICTION_MODULE = "daily_prediction.py"
 
-PERFORMANCE_MODULE = "model_performance.py"
+PERFORMANCE_MODULE = "weekly_model_comparison.py"
 
 
 # ============================================================

@@ -41,6 +41,8 @@ from dotenv import load_dotenv
 
 from tensorflow.keras.models import load_model
 
+from backtesting import run_backtests
+
 
 # ============================================================
 # CONFIG
@@ -1203,6 +1205,28 @@ def main():
     display_summary(
         all_results
     )
+
+    # ========================================================
+    # UPDATE PROFESSIONAL BACKTEST
+    # ========================================================
+
+    print("\nUpdating professional backtest stats...")
+
+    try:
+
+        summary, trades = run_backtests()
+
+        print(
+            f"Backtest updated: "
+            f"{len(summary)} models, "
+            f"{len(trades):,} trades."
+        )
+
+    except Exception as e:
+
+        print(
+            f"Backtest update skipped: {e}"
+        )
 
     print(
         "\nDaily prediction completed."
