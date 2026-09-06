@@ -2091,13 +2091,9 @@ def display_ml_dashboard():
                 border=True
             ):
 
-                model_display_name = DISPLAY_NAMES.get(
-                    model_name,
-                    model_name
-                )
-
                 st.markdown(
-                    f"### 🤖 {model_display_name}"
+                    f"### 🤖 "
+                    f"{DISPLAY_NAMES.get(model_name, model_name)}"
                 )
 
                 predicted_price = row[
@@ -3521,10 +3517,7 @@ def display_ml_dashboard():
                     height=450,
                     title=(
                         f"Equity Curve — "
-                        f"{DISPLAY_NAMES.get(
-                            selected_model,
-                            selected_model
-                        )}"
+                        f"{DISPLAY_NAMES.get(selected_model, selected_model)}"
                     ),
                     xaxis_title="Date",
                     yaxis_title="Portfolio Value ($)",
@@ -3878,38 +3871,28 @@ def display_ml_dashboard():
 
                     st.metric(
                         "Rank",
-                        f"#{int(
-                            row['model_rank']
-                        )}"
+                        f"#{int(row['model_rank'])}"
                     )
 
                 with c2:
 
                     st.metric(
                         "MAE",
-                        f"{float(
-                            row['mae']
-                        ):.5f}"
+                        f"{float(row['mae']):.5f}"
                     )
 
                 with c3:
 
                     st.metric(
                         "RMSE",
-                        f"{float(
-                            row['rmse']
-                        ):.5f}"
+                        f"{float(row['rmse']):.5f}"
                     )
 
                 with c4:
 
                     st.metric(
                         "Accuracy",
-                        f"{float(
-                            row[
-                                'directional_accuracy'
-                            ]
-                        ):.2f}%"
+                        f"{float(row['directional_accuracy']):.2f}%"
                     )
 
                 with c5:
@@ -3924,9 +3907,7 @@ def display_ml_dashboard():
 
                     st.metric(
                         "Return",
-                        f"{float(
-                            compounded
-                        ):+.2f}%"
+                        f"{float(compounded):+.2f}%"
                     )
 
                 st.divider()
@@ -4318,10 +4299,7 @@ if st.session_state.results:
 
                 st.caption(
                     f"Stop Loss: "
-                    f"${atr_info.get(
-                        'suggested_stop_loss',
-                        0
-                    ):,.2f}"
+                    f"${atr_info.get('suggested_stop_loss', 0):,.2f}"
                 )
 
     # ========================================================
